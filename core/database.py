@@ -85,6 +85,19 @@ def init_db(db_file: Optional[Path] = None):
     conn.close()
 
 
+def reset_db(db_file: Optional[Path] = None):
+    """Reset database tables for clean test isolation."""
+    conn = get_db_connection(db_file)
+    with conn:
+        conn.execute("DROP TABLE IF EXISTS deals")
+        conn.execute("DROP TABLE IF EXISTS deal_specs")
+        conn.execute("DROP TABLE IF EXISTS tenants")
+        conn.execute("DROP TABLE IF EXISTS invoices")
+        conn.execute("DROP TABLE IF EXISTS audit_logs")
+    conn.close()
+    init_db(db_file)
+
+
 def log_audit(
     deal_id: str,
     actor: str,
@@ -128,7 +141,6 @@ def save_deal_spec(spec: DealSpec, db_file: Optional[Path] = None):
     spec_json = spec.model_dump_json()
     now_iso = datetime.utcnow().isoformat()
     with conn:
-        # Upsert into deals table
         conn.execute(
             """
             INSERT INTO deals (deal_id, title, customer_slug, current_version, current_state, created_at, updated_at)
@@ -148,7 +160,6 @@ def save_deal_spec(spec: DealSpec, db_file: Optional[Path] = None):
                 now_iso,
             ),
         )
-        # Insert immutable spec version
         conn.execute(
             """
             INSERT INTO deal_specs (deal_id, version, state, spec_json, created_at)

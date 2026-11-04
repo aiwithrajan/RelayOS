@@ -1,8 +1,9 @@
 """RelayOS FastAPI Core Application."""
 import json
+from datetime import datetime
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, FileResponse
@@ -23,6 +24,8 @@ from core.schemas import (
     CustomerInfo,
     EngineeringSpec,
     CommercialSpec,
+    ApprovalRecord,
+    can_transition,
 )
 from core.cost_model import estimate_infra_cost
 from core.playbook_engine import evaluate_playbook
@@ -74,7 +77,6 @@ def seed_initial_deal_if_empty():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Initialize SQLite DB and seed initial deal
     init_db()
     seed_initial_deal_if_empty()
     yield
@@ -122,12 +124,43 @@ def get_deal(deal_id: str, version: Optional[int] = None):
     return deal
 
 
-@app.get("/api/v1/deals/{deal_id}/history")
+@app.get("/api/v1/deals/{deal_id}/history", response_model=List[DealSpec])
 def get_deal_history(deal_id: str):
     history = get_all_deal_specs(deal_id)
     if not history:
         raise HTTPException(status_code=404, detail=f"No history for deal '{deal_id}'")
     return history
+
+
+@app.get("/api/v1/deals/{deal_id}/diff")
+def get_deal_diff(deal_id: str):
+    """Return diff between v1 and v2 for comparison in God-Mode."""
+    v1 = get_deal_spec(deal_id, version=1)
+    v2 = get_deal_spec(deal_id, version=2)
+    if not v1:
+        raise HTTPException(status_code=404, detail="Version 1 not found")
+    return {
+        "deal_id": deal_id,
+        "has_v2": v2 is not None,
+        "v1": {
+            "price": v1.commercial.price_usd_year,
+            "rpm": v1.engineering.rate_limit_rpm,
+            "infra_cost": v1.engineering.infra_cost_usd_year,
+            "margin": v1.playbook.margin if v1.playbook else None,
+            "payment_terms": v1.commercial.payment_terms,
+            "setup_fee_waived": v1.commercial.setup_fee_waived,
+            "state": v1.state.value,
+        },
+        "v2": {
+            "price": v2.commercial.price_usd_year,
+            "rpm": v2.engineering.rate_limit_rpm,
+            "infra_cost": v2.engineering.infra_cost_usd_year,
+            "margin": v2.playbook.margin if v2.playbook else None,
+            "payment_terms": v2.commercial.payment_terms,
+            "setup_fee_waived": v2.commercial.setup_fee_waived,
+            "state": v2.state.value,
+        } if v2 else None,
+    }
 
 
 class CostEstimateRequest(BaseModel):
@@ -177,7 +210,7 @@ def apply_founder_counter(deal_id: str):
     new_cost = estimate_infra_cost(600)  # $5,200
     spec_v2 = DealSpec(
         deal_id=deal_id,
-        version=current_deal.version + 1,
+        version=2,
         state=DealState.ENGINEERED,
         customer=current_deal.customer,
         engineering=EngineeringSpec(
@@ -215,6 +248,49 @@ def apply_founder_counter(deal_id: str):
         },
     )
     return spec_v2
+
+
+@app.post("/api/v1/admin/deals/{deal_id}/founder-approve")
+def founder_approve_deal(deal_id: str):
+    """Founder approves the commercial terms (advances state to FOUNDER_APPROVED)."""
+    deal = get_deal_spec(deal_id)
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    if not can_transition(deal.state, DealState.FOUNDER_APPROVED):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot transition deal from {deal.state.value} to {DealState.FOUNDER_APPROVED.value}",
+        )
+
+    # Ensure playbook passed before founder approval
+    if not deal.playbook or not deal.playbook.passed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot approve deal: Playbook check has not passed",
+        )
+
+    deal.state = DealState.FOUNDER_APPROVED
+    deal.approvals.founder = ApprovalRecord(
+        approved_by="founder",
+        timestamp=datetime.utcnow().isoformat(),
+        notes=f"Founder approved commercial terms: ${deal.commercial.price_usd_year:,.0f}/yr at {deal.engineering.rate_limit_rpm} RPM",
+    )
+    save_deal_spec(deal)
+
+    log_audit(
+        deal_id=deal_id,
+        actor="founder",
+        action="APPROVE_FOUNDER",
+        status="SUCCESS",
+        details={
+            "version": deal.version,
+            "state": deal.state.value,
+            "approved_by": "founder",
+            "margin": deal.playbook.margin,
+        },
+    )
+    return deal
 
 
 @app.get("/api/v1/admin/audit-logs")
