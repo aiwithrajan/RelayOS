@@ -109,6 +109,15 @@ def get_god_mode():
     return FileResponse(template_path)
 
 
+@app.get("/t/{slug}", response_class=FileResponse)
+def get_tenant_portal(slug: str):
+    """Serve the Customer Enterprise Portal for tenant."""
+    template_path = TEMPLATES_DIR / "customer_portal.html"
+    if not template_path.exists():
+        raise HTTPException(status_code=404, detail="Portal template not found")
+    return FileResponse(template_path)
+
+
 # --- API Routes ---
 
 @app.get("/health")
@@ -263,7 +272,6 @@ def founder_approve_deal(deal_id: str):
             detail=f"Cannot transition deal from {deal.state.value} to {DealState.FOUNDER_APPROVED.value}",
         )
 
-    # Ensure playbook passed before founder approval
     if not deal.playbook or not deal.playbook.passed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -291,6 +299,178 @@ def founder_approve_deal(deal_id: str):
         },
     )
     return deal
+
+
+# --- Customer Endpoints (Sanitized - Internal Margins Redacted) ---
+
+@app.get("/api/v1/customer/proposal/{slug}")
+def get_customer_proposal(slug: str):
+    """Return sanitized customer proposal. Internal infra cost and margin are strictly redacted."""
+    # Find active deal for slug
+    deal = get_deal_spec("acme-2026-11")
+    if not deal or deal.customer.slug != slug:
+        raise HTTPException(status_code=404, detail=f"No active proposal found for '{slug}'")
+
+    # Sanitize payload: strip infra_cost_usd_year and playbook metrics
+    return {
+        "deal_id": deal.deal_id,
+        "version": deal.version,
+        "state": deal.state.value,
+        "customer": {
+            "name": deal.customer.name,
+            "slug": deal.customer.slug,
+        },
+        "commercial": {
+            "price_usd_year": deal.commercial.price_usd_year,
+            "term_months": deal.commercial.term_months,
+            "payment_terms": deal.commercial.payment_terms,
+            "setup_fee_waived": deal.commercial.setup_fee_waived,
+            "white_label": deal.commercial.white_label,
+        },
+        "engineering": {
+            "adapter": deal.engineering.adapter,
+            "rate_limit_rpm": deal.engineering.rate_limit_rpm,
+            # infra_cost_usd_year is intentionally redacted!
+        },
+        "approvals": {
+            "founder_approved": deal.approvals.founder is not None,
+            "customer_approved": deal.approvals.customer is not None,
+        },
+    }
+
+
+@app.post("/api/v1/customer/proposal/{slug}/accept")
+def customer_accept_proposal(slug: str):
+    """Acme champion signs and accepts proposal (advances to CUSTOMER_ACCEPTED)."""
+    deal = get_deal_spec("acme-2026-11")
+    if not deal or deal.customer.slug != slug:
+        raise HTTPException(status_code=404, detail=f"No active proposal for '{slug}'")
+
+    if not can_transition(deal.state, DealState.CUSTOMER_ACCEPTED):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot accept deal in state '{deal.state.value}': Founder must approve the proposal first",
+        )
+
+    deal.state = DealState.CUSTOMER_ACCEPTED
+    deal.approvals.customer = ApprovalRecord(
+        approved_by=f"{slug}_champion",
+        timestamp=datetime.utcnow().isoformat(),
+        notes=f"Accepted by {deal.customer.name} champion",
+    )
+    save_deal_spec(deal)
+
+    log_audit(
+        deal_id=deal.deal_id,
+        actor=f"{slug}_champion",
+        action="ACCEPT_CUSTOMER",
+        status="SUCCESS",
+        details={
+            "version": deal.version,
+            "state": deal.state.value,
+            "approved_by": f"{slug}_champion",
+        },
+    )
+    return {
+        "status": "success",
+        "state": deal.state.value,
+        "message": f"Proposal accepted by {deal.customer.name}. Tenant provisioning unlocked.",
+    }
+
+
+# --- Fulfillment Gated Endpoints (AT-5 Guardrails) ---
+
+class DealActionRequest(BaseModel):
+    deal_id: str
+
+
+@app.post("/api/v1/agent-tools/provision-tenant")
+def provision_tenant_endpoint(req: DealActionRequest):
+    """Provision tenant at /t/{slug}. Strictly requires CUSTOMER_ACCEPTED state (AT-5)."""
+    deal = get_deal_spec(req.deal_id)
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    if deal.state != DealState.CUSTOMER_ACCEPTED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"State Gate Violation (AT-5): Cannot provision tenant when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",
+        )
+
+    deal.state = DealState.PROVISIONED
+    save_deal_spec(deal)
+    log_audit(
+        deal_id=deal.deal_id,
+        actor="@deal-desk",
+        action="PROVISION_TENANT",
+        status="SUCCESS",
+        details={"slug": deal.customer.slug, "rate_limit_rpm": deal.engineering.rate_limit_rpm},
+    )
+    return {
+        "status": "success",
+        "state": deal.state.value,
+        "slug": deal.customer.slug,
+        "tenant_url": f"/t/{deal.customer.slug}",
+        "rate_limit_rpm": deal.engineering.rate_limit_rpm,
+    }
+
+
+@app.post("/api/v1/agent-tools/render-order-form")
+def render_order_form_endpoint(req: DealActionRequest):
+    """Render Order Form PDF. Strictly requires CUSTOMER_ACCEPTED or PROVISIONED state (AT-5)."""
+    deal = get_deal_spec(req.deal_id)
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    if deal.state not in [DealState.CUSTOMER_ACCEPTED, DealState.PROVISIONED]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"State Gate Violation (AT-5): Cannot render Order Form PDF when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",
+        )
+
+    log_audit(
+        deal_id=deal.deal_id,
+        actor="@deal-desk",
+        action="RENDER_ORDER_FORM",
+        status="SUCCESS",
+        details={"deal_id": deal.deal_id, "version": deal.version},
+    )
+    return {
+        "status": "success",
+        "deal_id": deal.deal_id,
+        "pdf_url": f"/api/v1/documents/order-form-{deal.deal_id}-v{deal.version}.pdf",
+    }
+
+
+@app.post("/api/v1/agent-tools/create-invoice")
+def create_invoice_endpoint(req: DealActionRequest):
+    """Create Stripe invoice. Strictly requires CUSTOMER_ACCEPTED or PROVISIONED state (AT-5)."""
+    deal = get_deal_spec(req.deal_id)
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    if deal.state not in [DealState.CUSTOMER_ACCEPTED, DealState.PROVISIONED]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"State Gate Violation (AT-5): Cannot create invoice when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",
+        )
+
+    deal.state = DealState.INVOICED
+    save_deal_spec(deal)
+    log_audit(
+        deal_id=deal.deal_id,
+        actor="@deal-desk",
+        action="CREATE_INVOICE",
+        status="SUCCESS",
+        details={"amount": deal.commercial.price_usd_year, "terms": deal.commercial.payment_terms},
+    )
+    return {
+        "status": "success",
+        "state": deal.state.value,
+        "invoice_id": f"in_mock_{deal.deal_id}_v{deal.version}",
+        "amount_usd": deal.commercial.price_usd_year,
+        "invoice_url": f"https://pay.stripe.com/invoice/mock_{deal.deal_id}",
+    }
 
 
 @app.get("/api/v1/admin/audit-logs")

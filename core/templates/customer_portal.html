@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acme FinTech — Dedicated Enterprise Proposal | RelayOS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #0F172A; color: #F8FAFC; }
+    .portal-card { background: #1E293B; border: 1px solid #334155; }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased p-4 md:p-8 flex flex-col justify-between max-w-5xl mx-auto">
+
+  <!-- Header -->
+  <header class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-700">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white text-lg shadow-lg">
+        A
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          <span>Acme FinTech</span>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">Enterprise Tier</span>
+        </h1>
+        <p class="text-xs text-slate-400">Custom Deployment Proposal & Service Agreement</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-slate-400">Status:</span>
+      <span id="proposalStatusBadge" class="text-xs font-semibold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+        Review & Acceptance Required
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="py-8 flex flex-col gap-6">
+
+    <!-- Hero Card -->
+    <div class="portal-card p-6 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Dedicated ERP Integration & Enterprise Quota</h2>
+        <p class="text-sm text-slate-300 mt-1 max-w-xl">
+          Tailored dedicated infrastructure for Acme FinTech with SAP Treasury synchronization, white-label routing, and SLA-backed capacity.
+        </p>
+      </div>
+      <div class="text-left md:text-right shrink-0">
+        <div class="text-xs uppercase tracking-wider text-slate-400 font-medium">Annual Contract Value</div>
+        <div id="proposalPriceDisplay" class="text-3xl font-extrabold text-white mt-0.5">$22,000 <span class="text-sm font-normal text-slate-400">/ year</span></div>
+        <div class="text-xs text-emerald-400 font-medium mt-0.5">Setup Fee $2,500 Waived</div>
+      </div>
+    </div>
+
+    <!-- Commercial Terms Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <div class="portal-card p-4 rounded-xl">
+        <div class="text-xs text-slate-400 uppercase tracking-wider font-medium">Rate Limit Quota</div>
+        <div id="proposalRpmDisplay" class="text-xl font-bold text-white mt-1">600 req / min</div>
+        <div class="text-[11px] text-slate-400 mt-1">Dedicated worker capacity with automatic burst protection.</div>
+      </div>
+
+      <div class="portal-card p-4 rounded-xl">
+        <div class="text-xs text-slate-400 uppercase tracking-wider font-medium">Payment Terms</div>
+        <div id="proposalTermsDisplay" class="text-xl font-bold text-white mt-1">Net-15</div>
+        <div class="text-[11px] text-slate-400 mt-1">Electronic invoicing via Stripe with ACH & wire transfer.</div>
+      </div>
+
+      <div class="portal-card p-4 rounded-xl">
+        <div class="text-xs text-slate-400 uppercase tracking-wider font-medium">Contract Term</div>
+        <div class="text-xl font-bold text-white mt-1">12 Months</div>
+        <div class="text-[11px] text-slate-400 mt-1">Annual subscription with enterprise support SLA.</div>
+      </div>
+
+      <div class="portal-card p-4 rounded-xl">
+        <div class="text-xs text-slate-400 uppercase tracking-wider font-medium">Branding & Domain</div>
+        <div class="text-xl font-bold text-emerald-400 mt-1">White-Label</div>
+        <div class="text-[11px] text-slate-400 mt-1">Dedicated route at <span class="text-slate-300 font-mono">/t/acme</span> with custom theme.</div>
+      </div>
+
+    </div>
+
+    <!-- Features & Customizations Included -->
+    <div class="portal-card p-6 rounded-2xl flex flex-col gap-4">
+      <h3 class="text-base font-semibold text-white">Tailored Engineering Deliverables</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-300">
+        <div class="flex items-start gap-2.5">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span><strong>Custom ERP Adapter</strong>: Automated sync with Acme SAP Treasury general ledger.</span>
+        </div>
+        <div class="flex items-start gap-2.5">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span><strong>Guaranteed 600 RPM</strong>: Dedicated container allocation isolated from multi-tenant noise.</span>
+        </div>
+        <div class="flex items-start gap-2.5">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span><strong>Rapid Deployment</strong>: Immediate provisioning upon human signature.</span>
+        </div>
+        <div class="flex items-start gap-2.5">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span><strong>Transparent Invoicing</strong>: Itemized Order Form PDF and hosted Stripe link.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sign-Off Action Card -->
+    <div class="portal-card p-6 rounded-2xl border-2 border-indigo-500/40 bg-gradient-to-r from-slate-900 to-indigo-950/30 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div>
+        <h3 class="text-lg font-bold text-white">Accept Proposal & Authorize Provisioning</h3>
+        <p class="text-xs text-slate-300 mt-1">
+          By accepting, you confirm commercial agreement on behalf of Acme FinTech.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <button id="rejectBtn" class="px-4 py-2.5 rounded-xl border border-slate-600 hover:bg-slate-800 text-slate-300 text-xs font-medium transition">
+          Request Changes
+        </button>
+        <button id="acceptBtn" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+          <span>Accept & Sign Agreement</span>
+          <span>➔</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Accepted State Banner (Hidden by default) -->
+    <div id="acceptedConfirmationBanner" class="hidden portal-card p-6 rounded-2xl border-2 border-emerald-500/50 bg-emerald-950/20 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xl border border-emerald-500/40">
+          ✓
+        </div>
+        <div>
+          <div class="text-sm font-bold text-emerald-300">Agreement Accepted by Acme Champion</div>
+          <div class="text-xs text-slate-300 mt-0.5">Deal state locked to CUSTOMER_ACCEPTED. Fulfillment engine is deploying your environment.</div>
+        </div>
+      </div>
+      <div id="tenantLiveLinkContainer" class="text-xs font-mono">
+        <span class="text-slate-400">Environment: </span>
+        <span class="text-emerald-400 font-semibold">Provisioning...</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="pt-6 border-t border-slate-800 text-center text-xs text-slate-500">
+    Powered by RelayOS Autonomous Control Plane · Secured by Switch & FastMCP
+  </footer>
+
+  <script>
+    async function loadProposal() {
+      try {
+        const res = await fetch('/api/v1/customer/proposal/acme');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById('proposalPriceDisplay').innerHTML = `$${data.commercial.price_usd_year.toLocaleString()} <span class="text-sm font-normal text-slate-400">/ year</span>`;
+        document.getElementById('proposalRpmDisplay').innerText = `${data.engineering.rate_limit_rpm.toLocaleString()} req / min`;
+        document.getElementById('proposalTermsDisplay').innerText = data.commercial.payment_terms;
+
+        const badge = document.getElementById('proposalStatusBadge');
+        if (data.state === 'CUSTOMER_ACCEPTED' || data.state === 'PROVISIONED' || data.state === 'INVOICED') {
+          badge.innerText = 'Accepted & Authorized ✓';
+          badge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+          
+          document.getElementById('acceptBtn').disabled = true;
+          document.getElementById('acceptBtn').innerText = 'Agreement Signed';
+          document.getElementById('acceptBtn').className = 'px-6 py-2.5 rounded-xl bg-slate-800 text-slate-500 font-medium text-xs cursor-not-allowed';
+          document.getElementById('rejectBtn').style.display = 'none';
+
+          document.getElementById('acceptedConfirmationBanner').classList.remove('hidden');
+          if (data.state === 'PROVISIONED' || data.state === 'INVOICED') {
+            document.getElementById('tenantLiveLinkContainer').innerHTML = `<a href="/t/acme" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-sans text-xs font-medium">Open Live Tenant Portal ➔</a>`;
+          }
+        }
+      } catch (e) {
+        console.error('Error loading proposal:', e);
+      }
+    }
+
+    document.getElementById('acceptBtn').addEventListener('click', async () => {
+      const res = await fetch('/api/v1/customer/proposal/acme/accept', { method: 'POST' });
+      if (res.ok) {
+        loadProposal();
+      } else {
+        const err = await res.json();
+        alert('Acceptance failed: ' + (err.detail || 'Founder must approve proposal first'));
+      }
+    });
+
+    document.getElementById('rejectBtn').addEventListener('click', async () => {
+      alert('Revision request logged. Your RelayOS team will be notified in Switch.');
+    });
+
+    loadProposal();
+    setInterval(loadProposal, 2000);
+  </script>
+</body>
+</html>
