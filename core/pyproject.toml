@@ -1,0 +1,25 @@
+[project]
+name = "core"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Rajan Mishra", email = "145970670+aiwithrajan@users.noreply.github.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "pydantic>=2.14.2",
+    "pytest>=9.2.0",
+    "python-multipart>=0.0.33",
+    "reportlab>=5.1.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+core = "core:main"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"

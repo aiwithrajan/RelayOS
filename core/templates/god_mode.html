@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RelayOS — God-Mode Mission Control</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bgDark: '#0B0D13',
+            cardDark: '#121622',
+            borderDark: '#1E2638',
+            accentPrimary: '#6366F1',
+            accentSuccess: '#10B981',
+            accentDanger: '#EF4444',
+            accentWarning: '#F59E0B'
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0B0D13; color: #E2E8F0; }
+    .glass-card { background: rgba(18, 22, 34, 0.85); backdrop-filter: blur(12px); border: 1px solid #1E2638; }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased p-4 lg:p-6 flex flex-col gap-6">
+
+  <!-- Top Nav Bar -->
+  <header class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl glass-card">
+    <div class="flex items-center gap-3">
+      <div class="h-9 w-9 rounded-lg bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center font-bold text-indigo-400 font-mono text-lg">
+        ⚡
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg font-bold tracking-tight text-white">RelayOS <span class="text-xs uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">God-Mode</span></h1>
+          <span class="text-xs text-slate-400">Track 01: Best Business Workflow</span>
+        </div>
+        <p class="text-xs text-slate-400 font-mono">Control Plane for Autonomous Deal Closing</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 font-mono text-xs">
+      <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center gap-2">
+        <span class="text-slate-400">DEAL:</span>
+        <span id="dealIdText" class="text-white font-semibold">acme-2026-11</span>
+      </div>
+      <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center gap-2">
+        <span class="text-slate-400">VER:</span>
+        <span id="dealVersionBadge" class="text-indigo-400 font-bold">v1</span>
+      </div>
+      <div id="stateBadge" class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
+        PRICE_CHECKED
+      </div>
+      <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="sessionTimer" class="text-emerald-400 font-semibold">00:45</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+    
+    <!-- Left Column: Financials & Playbook (7 Cols) -->
+    <div class="lg:col-span-7 flex flex-col gap-6">
+
+      <!-- Margin Progress Gauge Card -->
+      <div class="glass-card p-5 rounded-xl flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold text-white">Gross Margin Health</span>
+            <span class="text-xs text-slate-400 font-mono">(Floor Target: 75.0%)</span>
+          </div>
+          <div id="marginPercentageDisplay" class="text-2xl font-black font-mono text-red-400">
+            60.0%
+          </div>
+        </div>
+
+        <!-- Custom Progress Bar with 75% Marker -->
+        <div class="relative w-full bg-slate-800/80 h-5 rounded-full overflow-hidden p-0.5 border border-slate-700">
+          <div id="marginBarFill" class="h-full rounded-full transition-all duration-500 bg-red-500" style="width: 60%;"></div>
+          <!-- 75% Floor Target Line -->
+          <div class="absolute top-0 bottom-0 left-[75%] w-0.5 bg-yellow-400 shadow-[0_0_8px_#F59E0B] z-10" title="75% Floor Target"></div>
+        </div>
+        <div class="flex justify-between text-[11px] font-mono text-slate-400">
+          <span>0%</span>
+          <span class="text-yellow-400">75% Margin Floor (Rule R1)</span>
+          <span>100%</span>
+        </div>
+
+        <!-- Financial Metrics Grid -->
+        <div class="grid grid-cols-3 gap-3 pt-2">
+          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+            <div class="text-[11px] text-slate-400 font-mono">ANNUAL PRICE</div>
+            <div id="priceDisplay" class="text-base font-bold text-white font-mono">$20,000 / yr</div>
+            <div class="text-[10px] text-slate-500 font-mono">List: $24,000 (-16.7%)</div>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+            <div class="text-[11px] text-slate-400 font-mono">INFRASTRUCTURE COST</div>
+            <div id="infraCostDisplay" class="text-base font-bold text-white font-mono">$8,000 / yr</div>
+            <div id="rpmDisplay" class="text-[10px] text-slate-500 font-mono">1,000 req/min</div>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+            <div class="text-[11px] text-slate-400 font-mono">PLAYBOOK VERDICT</div>
+            <div id="playbookVerdictBadge" class="text-sm font-bold text-red-400 font-mono">FAIL (R1, R2)</div>
+            <div class="text-[10px] text-red-500/80 font-mono">Action Required</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playbook Rules Verification (R1-R5) -->
+      <div class="glass-card p-5 rounded-xl flex flex-col gap-3">
+        <h2 class="text-sm font-semibold text-white flex items-center justify-between">
+          <span>Enterprise Pricing Playbook Evaluation (Rules R1 – R5)</span>
+          <span class="text-xs text-indigo-400 font-mono">Enterprise_Pricing_Playbook.md</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="rulesGrid">
+          <!-- R1 -->
+          <div id="ruleR1Card" class="p-3 rounded-lg bg-red-950/20 border border-red-500/30 flex items-start justify-between">
+            <div>
+              <div class="text-xs font-bold text-red-400 font-mono">R1: Margin Floor (≥ 75%)</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">Calculated: 60.0% (Under 75% minimum)</div>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-red-500/20 text-red-300 border border-red-500/40">FAIL</span>
+          </div>
+          <!-- R2 -->
+          <div id="ruleR2Card" class="p-3 rounded-lg bg-red-950/20 border border-red-500/30 flex items-start justify-between">
+            <div>
+              <div class="text-xs font-bold text-red-400 font-mono">R2: Discount Authority (≤ 10%)</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">Discount: 16.7% ($20k < $21,600 floor)</div>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-red-500/20 text-red-300 border border-red-500/40">FAIL</span>
+          </div>
+          <!-- R3 -->
+          <div id="ruleR3Card" class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between">
+            <div>
+              <div class="text-xs font-bold text-emerald-400 font-mono">R3: Setup Fee Waiver</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">Fee $2,500 applied or valid waiver</div>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">PASS</span>
+          </div>
+          <!-- R4 -->
+          <div id="ruleR4Card" class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between">
+            <div>
+              <div class="text-xs font-bold text-emerald-400 font-mono">R4: Payment Terms</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">Terms: Net-30 standard / Net-15 allowed</div>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">PASS</span>
+          </div>
+          <!-- R5 -->
+          <div id="ruleR5Card" class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between md:col-span-2">
+            <div>
+              <div class="text-xs font-bold text-emerald-400 font-mono">R5: White-Label Customization</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">Allowed on Enterprise tier deployments</div>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">PASS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Engineering & Adapter Telemetry -->
+      <div class="glass-card p-5 rounded-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+            <span>Engineering Telemetry (@architect)</span>
+            <span class="text-xs font-mono text-emerald-400 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 rounded">pytest: 2 PASSED</span>
+          </h2>
+          <span class="text-xs font-mono text-slate-400">./relayos-app/acme_erp_adapter.py</span>
+        </div>
+        <div class="p-3 rounded-lg bg-black/60 border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto">
+          <div class="text-indigo-400 font-bold mb-1">// Adapter Implementation & Cost Mapping</div>
+          <div>Adapter: <span class="text-white">AcmeERPAdapter</span> (inherits BaseERPAdapter)</div>
+          <div>Tenant Slug: <span class="text-white">acme</span> | Destination: <span class="text-white">Acme-Treasury-SAP</span></div>
+          <div>Allocated Quota: <span id="telemetryRpm" class="text-yellow-400 font-bold">1,000 RPM</span></div>
+          <div>Infra Model: <span class="text-slate-400">$1,000 + ($7 * 1,000) =</span> <span class="text-emerald-400 font-bold">$8,000.00 / yr</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: DealSpec JSON, Audit Log, Controls (5 Cols) -->
+    <div class="lg:col-span-5 flex flex-col gap-6">
+
+      <!-- Action Panel -->
+      <div class="glass-card p-5 rounded-xl flex flex-col gap-3">
+        <h2 class="text-sm font-semibold text-white">Deal Governance & Actions</h2>
+        <div class="flex flex-col gap-2">
+          <button id="counterOfferBtn" class="w-full py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs font-mono transition flex items-center justify-center gap-2">
+            <span>⚡ Apply Founder Counter ($22k / 600 RPM / Net-15)</span>
+          </button>
+          <div class="text-[11px] text-slate-400 text-center font-mono">
+            Founder Override: Caps RPM at 600, resets price to $22k to clear 75% margin floor.
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Audit Log Feed -->
+      <div class="glass-card p-5 rounded-xl flex flex-col gap-3 flex-1">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+            <span>Tamper-Evident Audit Log</span>
+          </h2>
+          <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Live Append-Only</span>
+        </div>
+        <div id="auditLogContainer" class="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1 font-mono text-xs">
+          <!-- Populated by JavaScript -->
+          <div class="p-2.5 rounded bg-slate-900/60 border border-slate-800 flex flex-col gap-1">
+            <div class="flex items-center justify-between">
+              <span class="text-indigo-400 font-bold">@deal-desk</span>
+              <span class="px-1.5 py-0.5 text-[9px] rounded bg-red-500/20 text-red-300 font-bold">FAIL</span>
+            </div>
+            <div class="text-slate-300 text-[11px]">CHECK_PLAYBOOK: DealSpec v1 evaluated. Margin 60.0% fails R1, R2.</div>
+            <div class="text-[10px] text-slate-500">2026-11-04 14:50:00 UTC</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live DealSpec JSON Viewer -->
+      <div class="glass-card p-5 rounded-xl flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">DealSpec Immutable Record</h2>
+          <span id="specVersionLabel" class="text-xs font-mono text-indigo-400">version 1</span>
+        </div>
+        <pre id="dealSpecJson" class="p-3 rounded-lg bg-black/60 border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto max-h-48">
+{ "loading": true }
+        </pre>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    // Live Telemetry Polling Engine
+    let timerSeconds = 45;
+    setInterval(() => {
+      timerSeconds++;
+      const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+      const secs = String(timerSeconds % 60).padStart(2, '0');
+      document.getElementById('sessionTimer').innerText = `${mins}:${secs}`;
+    }, 1000);
+
+    async function fetchTelemetry() {
+      try {
+        const res = await fetch('/api/v1/deals/acme-2026-11');
+        if (!res.ok) return;
+        const deal = await res.json();
+        
+        // Update basic headers
+        document.getElementById('dealVersionBadge').innerText = `v${deal.version}`;
+        document.getElementById('specVersionLabel').innerText = `version ${deal.version}`;
+        document.getElementById('stateBadge').innerText = deal.state;
+        document.getElementById('priceDisplay').innerText = `$${deal.commercial.price_usd_year.toLocaleString()} / yr`;
+        document.getElementById('infraCostDisplay').innerText = `$${deal.engineering.infra_cost_usd_year.toLocaleString()} / yr`;
+        document.getElementById('rpmDisplay').innerText = `${deal.engineering.rate_limit_rpm.toLocaleString()} req/min`;
+        document.getElementById('telemetryRpm').innerText = `${deal.engineering.rate_limit_rpm.toLocaleString()} RPM`;
+        document.getElementById('dealSpecJson').innerText = JSON.stringify(deal, null, 2);
+
+        // Update Margin Gauge & Rules
+        if (deal.playbook) {
+          const margin = deal.playbook.margin;
+          const marginPct = (margin * 100).toFixed(1) + '%';
+          const marginDisplay = document.getElementById('marginPercentageDisplay');
+          const marginBar = document.getElementById('marginBarFill');
+          const verdictBadge = document.getElementById('playbookVerdictBadge');
+
+          marginDisplay.innerText = marginPct;
+          marginBar.style.width = Math.min(Math.max(margin * 100, 5), 100) + '%';
+
+          if (margin >= 0.75) {
+            marginDisplay.className = 'text-2xl font-black font-mono text-emerald-400';
+            marginBar.className = 'h-full rounded-full transition-all duration-500 bg-emerald-500';
+            verdictBadge.innerText = 'PASS (All R1-R5)';
+            verdictBadge.className = 'text-sm font-bold text-emerald-400 font-mono';
+          } else {
+            marginDisplay.className = 'text-2xl font-black font-mono text-red-400';
+            marginBar.className = 'h-full rounded-full transition-all duration-500 bg-red-500';
+            verdictBadge.innerText = 'FAIL (R1, R2)';
+            verdictBadge.className = 'text-sm font-bold text-red-400 font-mono';
+          }
+        }
+      } catch (err) {
+        console.error('Telemetry fetch error:', err);
+      }
+
+      // Fetch Audit Logs
+      try {
+        const auditRes = await fetch('/api/v1/admin/audit-logs');
+        if (auditRes.ok) {
+          const logs = await auditRes.json();
+          const container = document.getElementById('auditLogContainer');
+          if (logs.length > 0) {
+            container.innerHTML = logs.map(l => `
+              <div class="p-2.5 rounded bg-slate-900/60 border ${l.status === 'DENIED' || l.status === 'FAIL' ? 'border-red-500/40 bg-red-950/10' : 'border-slate-800'} flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-indigo-400 font-bold">${l.actor}</span>
+                  <span class="px-1.5 py-0.5 text-[9px] rounded ${l.status === 'DENIED' || l.status === 'FAIL' ? 'bg-red-500/20 text-red-300' : 'bg-emerald-500/20 text-emerald-300'} font-bold">${l.status}</span>
+                </div>
+                <div class="text-slate-300 text-[11px]">${l.action}: ${l.details || ''}</div>
+                <div class="text-[10px] text-slate-500">${l.timestamp}</div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.error('Audit log fetch error:', err);
+      }
+    }
+
+    // Polling every 2s
+    setInterval(fetchTelemetry, 2000);
+    fetchTelemetry();
+
+    // Hook counter offer button
+    document.getElementById('counterOfferBtn').addEventListener('click', async () => {
+      const res = await fetch('/api/v1/admin/deals/acme-2026-11/counter', { method: 'POST' });
+      if (res.ok) {
+        fetchTelemetry();
+      }
+    });
+  </script>
+</body>
+</html>
