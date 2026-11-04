@@ -205,3 +205,43 @@ def get_all_deal_specs(deal_id: str, db_file: Optional[Path] = None) -> List[Dea
     rows = cursor.fetchall()
     conn.close()
     return [DealSpec.model_validate_json(r["spec_json"]) for r in rows]
+
+
+def save_tenant(
+    slug: str,
+    deal_id: str,
+    name: str,
+    rate_limit_rpm: int,
+    adapter_file: str,
+    white_label: bool = True,
+    is_active: bool = True,
+    db_file: Optional[Path] = None,
+):
+    """Save or update tenant configuration in SQLite."""
+    conn = get_db_connection(db_file)
+    now_iso = datetime.utcnow().isoformat()
+    with conn:
+        conn.execute(
+            """
+            INSERT INTO tenants (slug, deal_id, name, rate_limit_rpm, adapter_file, white_label, is_active, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(slug) DO UPDATE SET
+                rate_limit_rpm = excluded.rate_limit_rpm,
+                adapter_file = excluded.adapter_file,
+                white_label = excluded.white_label,
+                is_active = excluded.is_active,
+                updated_at = excluded.updated_at
+            """,
+            (slug, deal_id, name, rate_limit_rpm, adapter_file, 1 if white_label else 0, 1 if is_active else 0, now_iso, now_iso),
+        )
+    conn.close()
+
+
+def get_tenant(slug: str, db_file: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    """Retrieve tenant details by slug."""
+    conn = get_db_connection(db_file)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tenants WHERE slug = ?", (slug,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None

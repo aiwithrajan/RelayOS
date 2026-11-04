@@ -1,0 +1,77 @@
+[
+  {
+    "step": 1,
+    "timestamp": "0:05",
+    "actor": "founder",
+    "type": "message",
+    "content": "@architect Acme FinTech asks for 4 things: ERP adapter, 1,000 RPM quota, white-label at /t/acme, and $20,000/yr. Build the adapter and estimate dedicated infra cost."
+  },
+  {
+    "step": 2,
+    "timestamp": "0:25",
+    "actor": "@architect",
+    "type": "task_handoff",
+    "action": "ESTIMATE_COST",
+    "input": { "rate_limit_rpm": 1000 },
+    "output": { "infra_cost_usd_year": 8000.0, "tests_passed": true, "adapter": "acme_erp_adapter.py" },
+    "content": "Acme ERP adapter built in ./relayos-app. All 2 unit tests passed. Dedicated infra cost for 1,000 RPM is $8,000/yr. Handing DealSpec v1 to @deal-desk."
+  },
+  {
+    "step": 3,
+    "timestamp": "0:45",
+    "actor": "@deal-desk",
+    "type": "verdict",
+    "action": "CHECK_PLAYBOOK",
+    "input": { "price": 20000.0, "infra_cost": 8000.0, "rpm": 1000 },
+    "output": { "margin": 0.600, "status": "FAIL", "failed_rules": ["R1", "R2"] },
+    "content": "Playbook check FAILED. Gross margin is 60.0% (violates R1: 75% margin floor). Discount is 16.7% (violates R2: 10% maximum discount floor of $21,600). Offer cannot be released."
+  },
+  {
+    "step": 4,
+    "timestamp": "1:05",
+    "actor": "founder",
+    "type": "counter_offer",
+    "content": "Counter-offer: Cap allocated quota at 600 RPM, raise price to $22,000/yr, set payment terms to Net-15, and waive the $2,500 setup fee. @architect patch the quota, @deal-desk re-evaluate."
+  },
+  {
+    "step": 5,
+    "timestamp": "1:25",
+    "actor": "@deal-desk",
+    "type": "verdict",
+    "action": "CHECK_PLAYBOOK",
+    "input": { "price": 22000.0, "infra_cost": 5200.0, "rpm": 600, "payment_terms": "Net-15", "setup_fee_waived": true },
+    "output": { "margin": 0.764, "status": "PASS", "passed_rules": ["R1", "R2", "R3", "R4", "R5"] },
+    "content": "Playbook check PASSED for DealSpec v2! Gross margin is 76.4% (R1 pass). Discount is 8.3% (R2 pass). Setup fee waived (R3 pass). Net-15 (R4 pass). White-label (R5 pass). Founder, please approve."
+  },
+  {
+    "step": 6,
+    "timestamp": "1:40",
+    "actor": "founder",
+    "type": "approval",
+    "action": "APPROVE_FOUNDER",
+    "content": "Commercial counter terms approved. Sending formal offer to Acme FinTech champion."
+  },
+  {
+    "step": 7,
+    "timestamp": "1:50",
+    "actor": "acme_champion",
+    "type": "acceptance",
+    "action": "ACCEPT_CUSTOMER",
+    "content": "Acme FinTech accepts the proposal of $22,000/yr at 600 RPM with Net-15 terms and waived setup fee. Authorization signed."
+  },
+  {
+    "step": 8,
+    "timestamp": "2:00",
+    "actor": "@deal-desk",
+    "type": "fulfillment",
+    "action": "PROVISION_AND_INVOICE",
+    "output": {
+      "tenant_url": "/t/acme",
+      "rate_limit_rpm": 600,
+      "pdf_url": "/api/v1/documents/order-form-acme-2026-11-v2.pdf",
+      "invoice_id": "in_mock_acme_2",
+      "invoice_url": "https://pay.stripe.com/invoice/mock_acme"
+    },
+    "content": "Deal Closed! Tenant provisioned at /t/acme (enforcing 600 RPM quota). Order Form PDF rendered and Stripe invoice issued. Complete workflow closed in one session!"
+  }
+]

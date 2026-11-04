@@ -1,0 +1,71 @@
+# RelayOS Declarative Switch Room & Agent Template
+# Target: Flip the Switch Hackathon (Track 01 - Best Business Workflow)
+version: "1.0"
+
+workspace:
+  name: "RelayOS Enterprise Deal Hub"
+  description: "Autonomous deal negotiation, engineering adapter verification, and deterministic playbook closing."
+
+channels:
+  - id: "relay-deal-room"
+    name: "acme-fintech-closing"
+    purpose: "Live deal closing session with Acme FinTech, Founder, @architect, and @deal-desk."
+    members:
+      - "founder"
+      - "acme_champion"
+      - "@architect"
+      - "@deal-desk"
+    instructions: |
+      This room is governed by RelayOS deal closing policies.
+      - @architect handles adapter engineering and infrastructure cost estimation only.
+      - @architect must NEVER quote commercial prices, terms, or discounts.
+      - @deal-desk checks the pricing playbook and cites rules R1 to R5.
+      - No tenant provisioning, PDF generation, or invoicing can occur without explicit Founder Approval followed by Customer Acceptance.
+
+agents:
+  - name: "@architect"
+    role: "Engineering Agent"
+    model: "opencode" # Fallback: claude-code or codex
+    working_directory: "./relayos-app"
+    description: "Builds and tests enterprise customer adapters in ./relayos-app and runs cost estimation."
+    mcp_servers:
+      - name: "architect-mcp"
+        command: "python"
+        args: ["-m", "mcp.architect_tools"]
+        tools:
+          - "estimate_cost_tool"
+          - "run_adapter_tests"
+    permissions:
+      allowed_paths:
+        - "./relayos-app"
+      forbidden_tools:
+        - "create_invoice"
+        - "provision_tenant"
+        - "render_order_form"
+
+  - name: "@deal-desk"
+    role: "Finance & Operations Agent"
+    model: "opencode"
+    description: "Evaluates deals against Enterprise_Pricing_Playbook.md and coordinates fulfillment."
+    addressing:
+      owner_only: true
+      allowed_callers:
+        - "founder"
+        - "@architect"
+    mcp_servers:
+      - name: "deal-desk-mcp"
+        command: "python"
+        args: ["-m", "mcp.deal_desk_tools"]
+        tools:
+          - "check_playbook_tool"
+          - "provision_tenant"
+          - "render_order_form"
+          - "create_invoice"
+    permissions:
+      required_state_gates:
+        provision_tenant: "CUSTOMER_ACCEPTED"
+        render_order_form: "CUSTOMER_ACCEPTED"
+        create_invoice: "CUSTOMER_ACCEPTED"
+
+kickoff_message: |
+  Founder: "@architect Acme FinTech needs a custom ERP adapter for SAP Treasury, a 1,000 req/min rate limit, white-label branding, and has asked for a price of $20,000 per year. Please build the adapter, verify tests, and estimate annual infra cost."

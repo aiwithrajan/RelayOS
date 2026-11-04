@@ -1,11 +1,12 @@
 """RelayOS FastAPI Core Application."""
 import json
+import time
 from datetime import datetime
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, Response, status, Header
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -17,6 +18,8 @@ from core.database import (
     get_all_deal_specs,
     get_audit_logs,
     log_audit,
+    save_tenant,
+    get_tenant,
 )
 from core.schemas import (
     DealSpec,
@@ -29,6 +32,9 @@ from core.schemas import (
 )
 from core.cost_model import estimate_infra_cost
 from core.playbook_engine import evaluate_playbook
+from core.rate_limiter import tenant_rate_limiter
+from core.pdf_generator import generate_order_form_pdf, DOCS_DIR
+from core.mock_stripe import create_stripe_invoice
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -98,7 +104,7 @@ app.add_middleware(
 )
 
 
-# --- HTML UI Routes ---
+# --- HTML UI & Tenant Routes ---
 
 @app.get("/god-mode", response_class=FileResponse)
 def get_god_mode():
@@ -109,16 +115,63 @@ def get_god_mode():
     return FileResponse(template_path)
 
 
-@app.get("/t/{slug}", response_class=FileResponse)
-def get_tenant_portal(slug: str):
-    """Serve the Customer Enterprise Portal for tenant."""
+@app.get("/t/{slug}")
+def get_tenant_endpoint(slug: str, request: Request, format: Optional[str] = None):
+    """Dynamic tenant routing at /t/{slug} enforcing rate limits & isolation (AT-7)."""
+    tenant = get_tenant(slug)
+    deal = get_deal_spec("acme-2026-11")
+
+    # If slug is unknown and no tenant exists
+    if not tenant and (not deal or deal.customer.slug != slug):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tenant '{slug}' not found",
+        )
+
+    # If tenant is provisioned, enforce rate limiting (AT-7)
+    if tenant and tenant["is_active"]:
+        allowed, count, limit = tenant_rate_limiter.is_allowed(slug, tenant["rate_limit_rpm"])
+        if not allowed:
+            return Response(
+                content=json.dumps({
+                    "error": "Rate limit exceeded",
+                    "tenant": slug,
+                    "allocated_quota_rpm": limit,
+                    "current_requests_in_window": count,
+                    "detail": f"429 Too Many Requests: Allocated quota of {limit} RPM reached.",
+                }),
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                media_type="application/json",
+            )
+
+        # Return active tenant payload if JSON requested
+        if format == "json" or "application/json" in request.headers.get("accept", ""):
+            return {
+                "status": "online",
+                "tenant": slug,
+                "branding": "Acme FinTech White-Label",
+                "rate_limit_rpm": tenant["rate_limit_rpm"],
+                "adapter": tenant["adapter_file"],
+                "requests_in_current_window": count,
+            }
+
+    # Otherwise serve customer proposal / portal
     template_path = TEMPLATES_DIR / "customer_portal.html"
-    if not template_path.exists():
-        raise HTTPException(status_code=404, detail="Portal template not found")
     return FileResponse(template_path)
 
 
-# --- API Routes ---
+# --- Document Serving ---
+
+@app.get("/api/v1/documents/{filename}")
+def get_document(filename: str):
+    """Download or view generated legal Order Form PDFs."""
+    file_path = DOCS_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Document '{filename}' not found")
+    return FileResponse(file_path, media_type="application/pdf", filename=filename)
+
+
+# --- Core REST API Routes ---
 
 @app.get("/health")
 def health_check():
@@ -143,7 +196,6 @@ def get_deal_history(deal_id: str):
 
 @app.get("/api/v1/deals/{deal_id}/diff")
 def get_deal_diff(deal_id: str):
-    """Return diff between v1 and v2 for comparison in God-Mode."""
     v1 = get_deal_spec(deal_id, version=1)
     v2 = get_deal_spec(deal_id, version=2)
     if not v1:
@@ -211,7 +263,6 @@ def check_playbook_endpoint(spec: DealSpec):
 
 @app.post("/api/v1/admin/deals/{deal_id}/counter")
 def apply_founder_counter(deal_id: str):
-    """Apply Founder Counter: $22k/yr, 600 RPM, Net-15, waived fee, white-label (creates DealSpec v2)."""
     current_deal = get_deal_spec(deal_id)
     if not current_deal:
         raise HTTPException(status_code=404, detail="Deal not found")
@@ -261,7 +312,6 @@ def apply_founder_counter(deal_id: str):
 
 @app.post("/api/v1/admin/deals/{deal_id}/founder-approve")
 def founder_approve_deal(deal_id: str):
-    """Founder approves the commercial terms (advances state to FOUNDER_APPROVED)."""
     deal = get_deal_spec(deal_id)
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
@@ -301,17 +351,14 @@ def founder_approve_deal(deal_id: str):
     return deal
 
 
-# --- Customer Endpoints (Sanitized - Internal Margins Redacted) ---
+# --- Customer Endpoints ---
 
 @app.get("/api/v1/customer/proposal/{slug}")
 def get_customer_proposal(slug: str):
-    """Return sanitized customer proposal. Internal infra cost and margin are strictly redacted."""
-    # Find active deal for slug
     deal = get_deal_spec("acme-2026-11")
     if not deal or deal.customer.slug != slug:
         raise HTTPException(status_code=404, detail=f"No active proposal found for '{slug}'")
 
-    # Sanitize payload: strip infra_cost_usd_year and playbook metrics
     return {
         "deal_id": deal.deal_id,
         "version": deal.version,
@@ -330,7 +377,6 @@ def get_customer_proposal(slug: str):
         "engineering": {
             "adapter": deal.engineering.adapter,
             "rate_limit_rpm": deal.engineering.rate_limit_rpm,
-            # infra_cost_usd_year is intentionally redacted!
         },
         "approvals": {
             "founder_approved": deal.approvals.founder is not None,
@@ -341,7 +387,6 @@ def get_customer_proposal(slug: str):
 
 @app.post("/api/v1/customer/proposal/{slug}/accept")
 def customer_accept_proposal(slug: str):
-    """Acme champion signs and accepts proposal (advances to CUSTOMER_ACCEPTED)."""
     deal = get_deal_spec("acme-2026-11")
     if not deal or deal.customer.slug != slug:
         raise HTTPException(status_code=404, detail=f"No active proposal for '{slug}'")
@@ -378,15 +423,29 @@ def customer_accept_proposal(slug: str):
     }
 
 
-# --- Fulfillment Gated Endpoints (AT-5 Guardrails) ---
+# --- Fulfillment Gated Endpoints & Privilege Isolation (AT-5, AT-6, AT-7, AT-8) ---
 
 class DealActionRequest(BaseModel):
     deal_id: str
+    caller: Optional[str] = None
 
 
 @app.post("/api/v1/agent-tools/provision-tenant")
-def provision_tenant_endpoint(req: DealActionRequest):
+def provision_tenant_endpoint(req: DealActionRequest, x_agent_role: Optional[str] = Header(None)):
     """Provision tenant at /t/{slug}. Strictly requires CUSTOMER_ACCEPTED state (AT-5)."""
+    if req.caller == "@architect" or x_agent_role == "architect":
+        log_audit(
+            deal_id=req.deal_id,
+            actor="@architect",
+            action="PROVISION_TENANT",
+            status="DENIED",
+            details={"reason": "Privilege isolation violation: @architect has no provisioning permissions (AT-6)"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Privilege Isolation Violation (AT-6): @architect is forbidden from provisioning tenants.",
+        )
+
     deal = get_deal_spec(req.deal_id)
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
@@ -397,15 +456,31 @@ def provision_tenant_endpoint(req: DealActionRequest):
             detail=f"State Gate Violation (AT-5): Cannot provision tenant when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",
         )
 
+    save_tenant(
+        slug=deal.customer.slug,
+        deal_id=deal.deal_id,
+        name=deal.customer.name,
+        rate_limit_rpm=deal.engineering.rate_limit_rpm,
+        adapter_file=deal.engineering.adapter,
+        white_label=deal.commercial.white_label,
+        is_active=True,
+    )
+
     deal.state = DealState.PROVISIONED
     save_deal_spec(deal)
+
     log_audit(
         deal_id=deal.deal_id,
         actor="@deal-desk",
         action="PROVISION_TENANT",
         status="SUCCESS",
-        details={"slug": deal.customer.slug, "rate_limit_rpm": deal.engineering.rate_limit_rpm},
+        details={
+            "slug": deal.customer.slug,
+            "rate_limit_rpm": deal.engineering.rate_limit_rpm,
+            "adapter": deal.engineering.adapter,
+        },
     )
+
     return {
         "status": "success",
         "state": deal.state.value,
@@ -416,8 +491,21 @@ def provision_tenant_endpoint(req: DealActionRequest):
 
 
 @app.post("/api/v1/agent-tools/render-order-form")
-def render_order_form_endpoint(req: DealActionRequest):
-    """Render Order Form PDF. Strictly requires CUSTOMER_ACCEPTED or PROVISIONED state (AT-5)."""
+def render_order_form_endpoint(req: DealActionRequest, x_agent_role: Optional[str] = Header(None)):
+    """Render Order Form PDF using ReportLab (AT-8). Strictly requires CUSTOMER_ACCEPTED or PROVISIONED state (AT-5)."""
+    if req.caller == "@architect" or x_agent_role == "architect":
+        log_audit(
+            deal_id=req.deal_id,
+            actor="@architect",
+            action="RENDER_ORDER_FORM",
+            status="DENIED",
+            details={"reason": "Privilege isolation: @architect has no document generation permissions (AT-6)"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Privilege Isolation Violation (AT-6): @architect is forbidden from document tools.",
+        )
+
     deal = get_deal_spec(req.deal_id)
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
@@ -428,23 +516,45 @@ def render_order_form_endpoint(req: DealActionRequest):
             detail=f"State Gate Violation (AT-5): Cannot render Order Form PDF when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",
         )
 
+    pdf_path = generate_order_form_pdf(deal)
+
     log_audit(
         deal_id=deal.deal_id,
         actor="@deal-desk",
         action="RENDER_ORDER_FORM",
         status="SUCCESS",
-        details={"deal_id": deal.deal_id, "version": deal.version},
+        details={
+            "deal_id": deal.deal_id,
+            "version": deal.version,
+            "pdf_path": str(pdf_path),
+        },
     )
+
     return {
         "status": "success",
         "deal_id": deal.deal_id,
-        "pdf_url": f"/api/v1/documents/order-form-{deal.deal_id}-v{deal.version}.pdf",
+        "version": deal.version,
+        "pdf_filename": pdf_path.name,
+        "pdf_url": f"/api/v1/documents/{pdf_path.name}",
     }
 
 
 @app.post("/api/v1/agent-tools/create-invoice")
-def create_invoice_endpoint(req: DealActionRequest):
-    """Create Stripe invoice. Strictly requires CUSTOMER_ACCEPTED or PROVISIONED state (AT-5)."""
+def create_invoice_endpoint(req: DealActionRequest, x_agent_role: Optional[str] = Header(None)):
+    """Create Stripe invoice (AT-6, AT-8). Strictly requires CUSTOMER_ACCEPTED or PROVISIONED state (AT-5)."""
+    if req.caller == "@architect" or x_agent_role == "architect":
+        log_audit(
+            deal_id=req.deal_id,
+            actor="@architect",
+            action="CREATE_INVOICE",
+            status="DENIED",
+            details={"reason": "Privilege isolation violation (AT-6): @architect attempted unauthorized call to billing endpoint"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Privilege Isolation Violation (AT-6): @architect is strictly forbidden from billing and invoicing tools.",
+        )
+
     deal = get_deal_spec(req.deal_id)
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
@@ -455,21 +565,21 @@ def create_invoice_endpoint(req: DealActionRequest):
             detail=f"State Gate Violation (AT-5): Cannot create invoice when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",
         )
 
+    invoice_record = create_stripe_invoice(deal)
+
     deal.state = DealState.INVOICED
     save_deal_spec(deal)
-    log_audit(
-        deal_id=deal.deal_id,
-        actor="@deal-desk",
-        action="CREATE_INVOICE",
-        status="SUCCESS",
-        details={"amount": deal.commercial.price_usd_year, "terms": deal.commercial.payment_terms},
-    )
+
     return {
         "status": "success",
         "state": deal.state.value,
-        "invoice_id": f"in_mock_{deal.deal_id}_v{deal.version}",
-        "amount_usd": deal.commercial.price_usd_year,
-        "invoice_url": f"https://pay.stripe.com/invoice/mock_{deal.deal_id}",
+        "invoice_id": invoice_record["invoice_id"],
+        "customer_slug": invoice_record["customer_slug"],
+        "amount_usd": invoice_record["amount_usd"],
+        "payment_terms": invoice_record["payment_terms"],
+        "invoice_status": invoice_record["status"],
+        "hosted_invoice_url": invoice_record["hosted_invoice_url"],
+        "pdf_url": invoice_record["pdf_url"],
     }
 
 
