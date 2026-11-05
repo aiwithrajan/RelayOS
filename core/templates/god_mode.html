@@ -290,6 +290,11 @@
           <button id="testIsolationBtn" class="w-full py-2 px-3 rounded-lg bg-red-950/40 hover:bg-red-950/70 border border-red-500/40 text-red-300 font-medium text-xs font-mono transition flex items-center justify-center gap-2">
             <span>🛡️ Test Security Isolation (AT-6: @architect Billing Attempt)</span>
           </button>
+
+          <!-- Reset Demo State -->
+          <button id="resetDemoBtn" class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600/60 text-slate-300 font-medium text-xs font-mono transition flex items-center justify-center gap-2">
+            <span>↺ Reset Demo to Initial Ask (v1)</span>
+          </button>
         </div>
       </div>
 
@@ -475,6 +480,11 @@
           body: JSON.stringify({ deal_id: 'acme-2026-11', caller: '@architect' })
         });
       } catch (e) {}
+      fetchTelemetry();
+    });
+
+    document.getElementById('resetDemoBtn').addEventListener('click', async () => {
+      await fetch('/api/v1/admin/reset', { method: 'POST' });
       fetchTelemetry();
     });
   </script>

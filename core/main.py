@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from core.database import (
     init_db,
+    reset_db,
     save_deal_spec,
     get_deal_spec,
     get_all_deal_specs,
@@ -596,3 +597,12 @@ def create_invoice_endpoint(req: DealActionRequest, x_agent_role: Optional[str] 
 @app.get("/api/v1/admin/audit-logs")
 def get_logs(deal_id: Optional[str] = None, limit: int = 50):
     return get_audit_logs(deal_id=deal_id, limit=limit)
+
+
+@app.post("/api/v1/admin/reset")
+def reset_system_endpoint():
+    """Reset the database to clean baseline and re-seed the initial Acme deal (v1)."""
+    reset_db()
+    seed_initial_deal_if_empty()
+    return {"status": "success", "message": "RelayOS state reset to v1 (Acme Initial Ask)"}
+
