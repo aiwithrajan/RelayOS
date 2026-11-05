@@ -42,7 +42,14 @@ def test_at6_architect_denied_from_billing():
         )
         assert denied_resp_header.status_code == 403
 
-        # 3. Verify audit log entry exists with status=DENIED
+        # 3. Attempt call with caller="architect" (without @ prefix)
+        denied_resp_no_at = client.post(
+            "/api/v1/agent-tools/create-invoice",
+            json={"deal_id": "acme-2026-11", "caller": "architect"},
+        )
+        assert denied_resp_no_at.status_code == 403
+
+        # 4. Verify audit log entry exists with status=DENIED
         logs = get_audit_logs(deal_id="acme-2026-11")
         denied_logs = [l for l in logs if l["actor"] == "@architect" and l["status"] == "DENIED"]
         assert len(denied_logs) > 0, "Expected DENIED audit log entry for @architect"

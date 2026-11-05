@@ -37,17 +37,17 @@ gantt
     US-2.1 Initial Playbook Evaluation (AT-1)  :done, 2026-11-04, 1d
     US-3.1 God-Mode Dashboard Baseline         :done, 2026-11-04, 1d
     section Sprint 2: Counter & Approval
-    US-1.3 DealSpec v2 Immutable Versioning    :active, 2026-11-05, 1d
-    US-2.2 Counter Rule Checks (AT-2, AT-3)    :active, 2026-11-05, 1d
-    US-3.2 Founder Approval & Diff Viewer      :active, 2026-11-05, 1d
+    US-1.3 DealSpec v2 Immutable Versioning    :done, 2026-11-05, 1d
+    US-2.2 Counter Rule Checks (AT-2, AT-3)    :done, 2026-11-05, 1d
+    US-3.2 Founder Approval & Diff Viewer      :done, 2026-11-05, 1d
     section Sprint 3: Customer Portal
-    US-3.3 Customer Portal & Terms Display     :2026-11-06, 1d
-    US-3.4 Customer Sign-Off & State Gate (AT-5):2026-11-06, 1d
+    US-3.3 Customer Portal & Terms Display     :done, 2026-11-06, 1d
+    US-3.4 Customer Sign-Off & State Gate (AT-5):done, 2026-11-06, 1d
     section Sprint 4: Fulfillment & Isolation
-    US-4.1 Dynamic Tenant Provisioning (AT-7)  :2026-11-07, 1d
-    US-4.2 ReportLab PDF & Mock Stripe (AT-8)  :2026-11-07, 1d
-    US-4.3 Privilege Isolation & Audit (AT-6)  :2026-11-07, 1d
-    US-4.4 Switch Template & Replay Mode (FR-12):2026-11-07, 1d
+    US-4.1 Dynamic Tenant Provisioning (AT-7)  :done, 2026-11-07, 1d
+    US-4.2 ReportLab PDF & Mock Stripe (AT-8)  :done, 2026-11-07, 1d
+    US-4.3 Privilege Isolation & Audit (AT-6)  :done, 2026-11-07, 1d
+    US-4.4 Switch Template & Replay Mode (FR-12):done, 2026-11-07, 1d
 ```
 
 ---

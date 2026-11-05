@@ -131,9 +131,14 @@ def test_at6_architect_denied_from_billing():
         client.post("/api/v1/admin/deals/acme-2026-11/founder-approve")
         client.post("/api/v1/customer/proposal/acme/accept")
 
+        # Both "@architect" and "architect" must be blocked with HTTP 403
         resp = client.post("/api/v1/agent-tools/create-invoice", json={"deal_id": "acme-2026-11", "caller": "@architect"})
         assert resp.status_code == 403
         assert "Privilege Isolation Violation (AT-6)" in resp.json()["detail"]
+
+        resp_no_at = client.post("/api/v1/agent-tools/create-invoice", json={"deal_id": "acme-2026-11", "caller": "architect"})
+        assert resp_no_at.status_code == 403
+        assert "Privilege Isolation Violation (AT-6)" in resp_no_at.json()["detail"]
 
         logs = get_audit_logs(deal_id="acme-2026-11")
         denied = [l for l in logs if l["actor"] == "@architect" and l["status"] == "DENIED"]

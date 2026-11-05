@@ -152,8 +152,8 @@ $$\text{Annual Dedicated Infra Cost} = \$1,000 + (\$7 \times \text{Allocated RPM
 
 1. **Factor 1 (Addressing)**: `@deal-desk` answers only the Founder and Founder-authorized agents.
 2. **Factor 2 (Scope)**: `@architect` has access only to `./relayos-app` and cannot modify playbook rules.
-3. **Factor 3 (Tool & Gate)**: `@architect` has no billing tools. Any direct HTTP attempt returns **HTTP 403 Forbidden** and logs `UNAUTHORIZED_ACCESS_DENIED` to `audit_logs` (Tested in **AT-6**).
-4. **State Machine Gate (AT-5)**: Provisioning, PDF rendering, and invoice creation are rejected server-side in all states prior to `CUSTOMER_ACCEPTED`.
+3. **Factor 3 (Tool & Gate)**: `@architect` has no billing tools. Any direct HTTP attempt (passing `caller: "@architect"` or `"architect"`, or `X-Agent-Role: "architect"`) returns **HTTP 403 Forbidden** and logs `UNAUTHORIZED_ACCESS_DENIED` to `audit_logs` (Tested in **AT-6**).
+4. **State Machine Gate (AT-5)**: Provisioning, PDF rendering, and invoice creation are rejected server-side in all states prior to `CUSTOMER_ACCEPTED`. Once customer acceptance is recorded, fulfillment actions remain idempotent and non-blocking across the terminal states (`CUSTOMER_ACCEPTED`, `PROVISIONED`, `INVOICED`).
 
 ---
 
@@ -179,5 +179,7 @@ uv run --project core pytest tests/test_all_acceptance_tests.py -v
 
 ## 8. Limitations & Scope Disclaimers
 * **Billing**: Mock Stripe is the default for hackathon grading; real Stripe test keys can be configured via `STRIPE_API_KEY`.
+* **Adapters**: `relayos-app/acme_erp_adapter.py` is a synthetic ERP integration stub for deterministic local testing and hackathon demonstration.
+* **Test Isolation**: Pytest uses `tests/conftest.py` with an isolated temporary SQLite database, so the full test suite can be run at any time without database lock conflicts, even while the live Uvicorn server is active.
 * **Multi-Tenancy**: Tenant process isolation is simulated via dynamic routing and Python subprocess execution for local demo safety.
 * **Scope**: Built for Flip the Switch Hackathon (Track 01: Best Business Workflow).

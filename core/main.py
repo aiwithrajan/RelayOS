@@ -430,10 +430,19 @@ class DealActionRequest(BaseModel):
     caller: Optional[str] = None
 
 
+def is_architect_caller(caller: Optional[str], x_agent_role: Optional[str]) -> bool:
+    """Helper to detect @architect caller with or without @ prefix."""
+    if x_agent_role and x_agent_role.lstrip("@").strip().lower() == "architect":
+        return True
+    if caller and caller.lstrip("@").strip().lower() == "architect":
+        return True
+    return False
+
+
 @app.post("/api/v1/agent-tools/provision-tenant")
 def provision_tenant_endpoint(req: DealActionRequest, x_agent_role: Optional[str] = Header(None)):
     """Provision tenant at /t/{slug}. Strictly requires CUSTOMER_ACCEPTED state (AT-5)."""
-    if req.caller == "@architect" or x_agent_role == "architect":
+    if is_architect_caller(req.caller, x_agent_role):
         log_audit(
             deal_id=req.deal_id,
             actor="@architect",
@@ -450,7 +459,7 @@ def provision_tenant_endpoint(req: DealActionRequest, x_agent_role: Optional[str
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
 
-    if deal.state != DealState.CUSTOMER_ACCEPTED:
+    if deal.state not in [DealState.CUSTOMER_ACCEPTED, DealState.PROVISIONED, DealState.INVOICED]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"State Gate Violation (AT-5): Cannot provision tenant when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",
@@ -466,8 +475,9 @@ def provision_tenant_endpoint(req: DealActionRequest, x_agent_role: Optional[str
         is_active=True,
     )
 
-    deal.state = DealState.PROVISIONED
-    save_deal_spec(deal)
+    if deal.state == DealState.CUSTOMER_ACCEPTED:
+        deal.state = DealState.PROVISIONED
+        save_deal_spec(deal)
 
     log_audit(
         deal_id=deal.deal_id,
@@ -493,7 +503,7 @@ def provision_tenant_endpoint(req: DealActionRequest, x_agent_role: Optional[str
 @app.post("/api/v1/agent-tools/render-order-form")
 def render_order_form_endpoint(req: DealActionRequest, x_agent_role: Optional[str] = Header(None)):
     """Render Order Form PDF using ReportLab (AT-8). Strictly requires CUSTOMER_ACCEPTED or PROVISIONED state (AT-5)."""
-    if req.caller == "@architect" or x_agent_role == "architect":
+    if is_architect_caller(req.caller, x_agent_role):
         log_audit(
             deal_id=req.deal_id,
             actor="@architect",
@@ -510,7 +520,7 @@ def render_order_form_endpoint(req: DealActionRequest, x_agent_role: Optional[st
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
 
-    if deal.state not in [DealState.CUSTOMER_ACCEPTED, DealState.PROVISIONED]:
+    if deal.state not in [DealState.CUSTOMER_ACCEPTED, DealState.PROVISIONED, DealState.INVOICED]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"State Gate Violation (AT-5): Cannot render Order Form PDF when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",
@@ -542,7 +552,7 @@ def render_order_form_endpoint(req: DealActionRequest, x_agent_role: Optional[st
 @app.post("/api/v1/agent-tools/create-invoice")
 def create_invoice_endpoint(req: DealActionRequest, x_agent_role: Optional[str] = Header(None)):
     """Create Stripe invoice (AT-6, AT-8). Strictly requires CUSTOMER_ACCEPTED or PROVISIONED state (AT-5)."""
-    if req.caller == "@architect" or x_agent_role == "architect":
+    if is_architect_caller(req.caller, x_agent_role):
         log_audit(
             deal_id=req.deal_id,
             actor="@architect",
@@ -559,7 +569,7 @@ def create_invoice_endpoint(req: DealActionRequest, x_agent_role: Optional[str] 
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
 
-    if deal.state not in [DealState.CUSTOMER_ACCEPTED, DealState.PROVISIONED]:
+    if deal.state not in [DealState.CUSTOMER_ACCEPTED, DealState.PROVISIONED, DealState.INVOICED]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"State Gate Violation (AT-5): Cannot create invoice when deal is in '{deal.state.value}'. Must be in 'CUSTOMER_ACCEPTED'.",

@@ -1,4 +1,5 @@
 """SQLite database layer for RelayOS with immutable versioning and audit logging."""
+import os
 import sqlite3
 import json
 from pathlib import Path
@@ -6,12 +7,21 @@ from typing import List, Optional, Tuple, Dict, Any
 from datetime import datetime
 from core.schemas import DealSpec, DealState
 
-DB_PATH = Path(__file__).resolve().parent.parent / "relayos.db"
+DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "relayos.db"
+
+
+def get_db_path() -> Path:
+    """Retrieve database path from environment variable or default location."""
+    env_path = os.getenv("RELAYOS_DB_PATH")
+    if env_path:
+        return Path(env_path)
+    return DEFAULT_DB_PATH
 
 
 def get_db_connection(db_file: Optional[Path] = None) -> sqlite3.Connection:
-    target_path = db_file or DB_PATH
-    conn = sqlite3.connect(str(target_path))
+    target_path = db_file or get_db_path()
+    # timeout=10 to handle any short concurrent reads/writes cleanly
+    conn = sqlite3.connect(str(target_path), timeout=10.0)
     conn.row_factory = sqlite3.Row
     return conn
 
