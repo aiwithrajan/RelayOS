@@ -90,33 +90,49 @@ graph TB
 
 ---
 
-## 4. Quickstart: Live Mode & Zero-Key Replay Mode
+## 4. Quickstart: Setup & Reproduction
 
 ### System Requirements:
-- **Operating System**: macOS (Tested on Apple Silicon / x86_64) or Linux
-- **Python**: 3.11+ (Managed via `uv`)
-- **Docker**: Optional (required only for local Mattermost Switch container in live mode)
+- **Operating System**: macOS (Apple Silicon / x86_64) or Linux
+- **Python**: 3.11+
+- **Package Manager**: [`uv`](https://docs.astral.sh/uv/) (recommended) or standard Python `pip`
 
-### 1. Clone & Setup
+---
+
+### Step 1: Clone the Public Repository
 ```bash
 git clone https://github.com/aiwithrajan/RelayOS.git
 cd RelayOS
+```
+
+### Step 2: Install Dependencies
+```bash
 uv sync --project core
 ```
 
-### 2. Run Replay Mode (Zero API Keys Needed)
-Judges can evaluate the complete, deterministic 8-step workflow immediately:
+### Step 3: Verify the Acceptance Test Suite (AT-1 through AT-8)
+All 32 tests pass deterministically in under 7 seconds:
+```bash
+uv run --project core pytest
+```
+
+### Step 4: Run the Local Web Server & Dashboards
+```bash
+uv run --project core uvicorn core.main:app --host 0.0.0.0 --port 8000 --reload
+```
+Once started, open your browser:
+- 👑 **Admin Mission Control**: [http://localhost:8000/god-mode](http://localhost:8000/god-mode)
+- 🏢 **Customer Enterprise Portal**: [http://localhost:8000/t/acme](http://localhost:8000/t/acme)
+- 📜 **Pricing Playbook Specs**: [Enterprise_Pricing_Playbook.md](Enterprise_Pricing_Playbook.md)
+
+### Step 5: Run Offline Replay Mode (Zero API Keys Needed)
+Judges can evaluate the complete, deterministic 8-step workflow without any cloud credentials:
 ```bash
 ./scripts/demo_up.sh --replay
 ```
-Open **Admin Mission Control** at: [http://localhost:8000/god-mode](http://localhost:8000/god-mode)  
-Open **Customer Enterprise Portal** at: [http://localhost:8000/t/acme](http://localhost:8000/t/acme)
 
-### 3. Run Live Mode with Switch Console
-```bash
-./scripts/demo_up.sh
-```
-1. Open Switch Console and import [`switch/relayos.template.yaml`](file:///Users/apple/Desktop/Switch/switch/relayos.template.yaml).
+### Step 6: Run Live Mode with Switch Console
+1. Open your Switch Console and import [`switch/relayos.template.yaml`](switch/relayos.template.yaml).
 2. Enter room `acme-fintech-closing` and post the kickoff message:
    ```text
    @architect Acme FinTech asks for 4 things: ERP adapter, 1,000 RPM quota, white-label at /t/acme, and $20,000/yr. Build the adapter and estimate dedicated infra cost.
