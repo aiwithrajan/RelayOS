@@ -1,10 +1,11 @@
-# RelayOS — Autonomous Enterprise Deal Closing Platform
+# RelayOS for Switch — Autonomous Enterprise Deal Closing Platform
 > **Flip the Switch Hackathon · Track 01: Best Business Workflow ($2,000 Cash Prize)**  
-> *From two weeks of sales-engineering-legal friction to one 2-minute Switch session.*
+> *From a 14-day enterprise sales cycle to a 2m 34s autonomous closing session on Switch.*
 
-[![Tests](https://img.shields.io/badge/Acceptance%20Tests-8%2F8%20Passing-emerald)](file:///Users/apple/Desktop/Switch/tests/test_all_acceptance_tests.py)
+[![Tests](https://img.shields.io/badge/Acceptance%20Tests-8%2F8%20Passing-emerald)](https://github.com/aiwithrajan/RelayOS)
+[![Demo Video](https://img.shields.io/badge/YouTube-Watch%20Demo-red)](https://youtu.be/3_CJ1isXbBA?si=sbp3CISsMhlnP0R5)
+[![Live Demo](https://img.shields.io/badge/Vercel-Live%20Demo-blue)](https://relayos-seven.vercel.app/god-mode)
 [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-purple)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-aiwithrajan%2FRelayOS-black)](https://github.com/aiwithrajan/RelayOS)
 
 ---
