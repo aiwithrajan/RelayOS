@@ -294,7 +294,26 @@
 
           document.getElementById('acceptedConfirmationBanner').classList.remove('hidden');
           if (data.state === 'PROVISIONED' || data.state === 'INVOICED') {
-            document.getElementById('tenantLiveLinkContainer').innerHTML = `<a href="/t/acme" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-sans text-xs font-medium">Open Live Tenant Portal ➔</a>`;
+            document.getElementById('tenantLiveLinkContainer').innerHTML = `
+              <div class="flex items-center gap-2">
+                <a href="/api/v1/documents/order-form-acme-2026-11-v2.pdf" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-sans text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition">
+                  <span>Download Agreement</span>
+                  <span>📄</span>
+                </a>
+                <a href="/t/acme" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-sans text-xs font-medium shadow-md shadow-emerald-600/30 flex items-center gap-1.5 transition">
+                  <span>Open Live Tenant</span>
+                  <span>➔</span>
+                </a>
+              </div>
+            `;
+          } else {
+            document.getElementById('tenantLiveLinkContainer').innerHTML = `
+              <div class="flex items-center gap-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span class="text-amber-300 font-semibold text-xs font-mono">Provisioning Environment...</span>
+              </div>
+              <div class="text-[10px] text-slate-400 font-sans mt-0.5">Awaiting @deal-desk automated fulfillment</div>
+            `;
           }
         }
       } catch (e) {
