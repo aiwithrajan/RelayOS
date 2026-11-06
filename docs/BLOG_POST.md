@@ -1,183 +1,284 @@
-# Building RelayOS with Switch: The Complete Guide to Orchestrating Multi-Agent Business Workflows
+# Close in 2 minutes, not 14 days: building an autonomous enterprise deal room on Switch
 
-> *How to turn two weeks of enterprise sales, engineering, and legal friction into a 2-minute autonomous session using Switch, FastMCP, and deterministic guardrails.*
+> *When an enterprise prospect asks for a custom adapter, 1,000 req/min quota, and non-standard pricing on a live sales call, closing takes two weeks. We built a multi-agent deal room on Switch that closes it in 2 minutes and 34 seconds — with deterministic pricing math, two-party human gates, and zero privilege leaks.*
 
----
-
-## 1. Why Switch Changes the Game for AI Agents
-
-If you've built with AI agents recently, you've likely hit the "single-agent sandbox" ceiling. An agent running in a private terminal (like Claude Code or Codex) is incredible at editing code, but real businesses don't run on code alone. They run on **cross-functional collaboration**:
-- **Engineering** evaluates feasibility and builds adapters.
-- **Finance** calculates gross margins and enforces pricing floors.
-- **Sales & Founders** steer negotiations and approve custom terms.
-- **Customers** review contracts and sign on the dotted line.
-
-Before **Switch**, orchestrating this required duct-taping disjointed Slack bots, brittle webhooks, and bespoke agent harnesses. 
-
-**Switch flips this entirely.** Switch treats AI agents and humans as first-class citizens in a shared workspace. It provides:
-1. **Shared Context**: Agents and humans converse in the same room (`acme-fintech-closing`).
-2. **Declarative Topology**: You define your agents, channels, and rules in a single declarative YAML template (`relayos.template.yaml`).
-3. **Privilege Isolation & FastMCP**: Different agents have access to strictly scoped tools—preventing an engineering agent from accidentally issuing invoices or discounting prices.
-
-In this guide, we'll walk through exactly how to build a production-grade multi-agent business system using Switch, using our project **RelayOS** as a real-world case study.
+[Live demo](https://relayos-seven.vercel.app/god-mode) (Vercel, no login needed) · [Customer Portal](https://relayos-seven.vercel.app/t/acme) · [Code](https://github.com/aiwithrajan/RelayOS) · [Video](https://relayos-seven.vercel.app/demo-video) · Built for **Flip the Switch Hackathon (WeMakeDevs × Switch)**, Track 01: Best Business Workflow.
 
 ---
 
-## 2. Switch 101: The Core Concepts Every First-Time Developer Needs to Know
+## The short version
 
-If you are opening Switch for the first time, here is the mental model in 60 seconds:
+On our demo deal, the agents close a **$23,000/yr enterprise contract** with a custom SAP Treasury ERP adapter, a dedicated 600 req/min rate limit, white-label hosting, and automated Net-15 invoicing in **2 minutes and 34 seconds**. 
+
+In traditional B2B SaaS, that same deal takes **7 to 14 business days** bouncing between sales reps, engineering, finance, and legal.
+
+Three design choices make this work:
+1. **The playbook decides, the model doesn't.** Commercial viability is evaluated purely by deterministic Python code against our Enterprise Pricing Playbook (Rules R1 to R5). The AI never guesses a discount or hallucinates a gross margin.
+2. **Switch does the real work:** It provides the shared deal room (`#acme-fintech-closing`) where founder, customer, engineering agent (`@architect`), and finance agent (`@deal-desk`) collaborate in one context.
+3. **Privilege isolation over FastMCP:** `@architect` can build code and run tests, but is strictly blocked from touching billing tools. If it tries, RelayOS throws an **HTTP 403 Forbidden** security denial and logs an audit alarm.
+
+---
+
+## The problem
+
+You're a B2B SaaS founder on a Zoom call with the Head of Engineering at a Fortune 500 prospect (let's call them Acme FinTech). They want to buy, but they have four non-negotiable requirements:
+1. **A custom adapter** to sync with their legacy SAP Treasury general ledger.
+2. **A dedicated 1,000 requests/minute quota** for month-end payroll spikes.
+3. **White-label deployment** at `/t/acme`.
+4. **A price of $20,000/year** (against your enterprise list price of $24,000/year).
+
+You want to say "yes" while they're excited. But in the real world, you can't:
+- **Engineering** needs 3 to 5 days to inspect the SAP interface, write the adapter, run tests, and calculate how much dedicated worker infrastructure will cost.
+- **Finance** needs 2 days to verify if $20,000 leaves enough gross margin to cover that 1,000 RPM infra without violating company margin floors.
+- **Sales & Founder** have to negotiate counter-offers if the ask falls below profitability.
+- **Legal** takes another week to draft the Order Form schedule, collect signatures, and wire Stripe invoicing.
+
+By the time all four departments finish their handoffs **two weeks later**, the deal has lost momentum, the champion is distracted by another fire, and the deal slips into next quarter.
+
+---
+
+## What we built
+
+**RelayOS** compresses that entire cross-functional closing cycle into a single live Switch session.
+
+Inside the Switch deal room (`#acme-fintech-closing`), the human founder, the customer champion, and two specialized AI agents collaborate in real time:
 
 ```mermaid
 graph TD
-    Workspace["Switch Workspace (e.g. RelayOS Deal Hub)"]
-    Channel["Channel / Deal Room (#acme-fintech-closing)"]
-    HumanFounder["Founder (Human Steering)"]
-    HumanCustomer["Customer Champion (Human Signer)"]
-    AgentArchitect["@architect (Engineering Agent)"]
-    AgentDealDesk["@deal-desk (Finance / Playbook Agent)"]
-    MCPServer1["FastMCP: Architect Tools (Cost & Code)"]
-    MCPServer2["FastMCP: Deal Desk Tools (Billing & PDF)"]
+    subgraph SwitchRoom ["Switch Deal Room: #acme-fintech-closing"]
+        Founder["Founder (Human Admin)"]
+        Champion["Acme Champion (Human Customer)"]
+        Architect["@architect (Engineering Agent)"]
+        DealDesk["@deal-desk (Finance Agent)"]
+    end
 
-    Workspace --> Channel
-    Channel --> HumanFounder
-    Channel --> HumanCustomer
-    Channel --> AgentArchitect
-    AgentArchitect --> MCPServer1
-    Channel --> AgentDealDesk
-    AgentDealDesk --> MCPServer2
+    subgraph FastMCP ["FastMCP Isolated Tool Servers"]
+        ArchMCP["Architect FastMCP Server<br/>• run_adapter_tests<br/>• estimate_cost_tool<br/>❌ No Billing Tools"]
+        DeskMCP["Deal Desk FastMCP Server<br/>• check_playbook_tool<br/>• provision_tenant<br/>• render_order_form<br/>• create_invoice"]
+    end
+
+    subgraph CoreBackend ["RelayOS Deterministic Core (:8000)"]
+        Playbook["Playbook Engine (Rules R1-R5)"]
+        StateMachine["State Machine Gates<br/>(DRAFT ➔ INVOICED)"]
+        Fulfillment["Rate Limiter (600 RPM)<br/>ReportLab PDF & Stripe"]
+    end
+
+    Founder --> SwitchRoom
+    Champion --> SwitchRoom
+    SwitchRoom <--> Architect
+    SwitchRoom <--> DealDesk
+    Architect --> ArchMCP
+    DealDesk --> DeskMCP
+    ArchMCP --> CoreBackend
+    DeskMCP --> CoreBackend
 ```
 
-1. **Workspace**: The top-level boundary for your team, agents, and tool configurations.
-2. **Channel / Room**: The collaborative session where work happens. A room can host humans, agents, or both.
-3. **Room Instructions**: The natural language rules of engagement. For instance: *"@architect must never quote commercial terms. Only @deal-desk can verify pricing."*
-4. **FastMCP Servers**: Standards-based Model Context Protocol servers running over stdio or HTTP that expose specific executable functions to authorized agents.
-5. **Decisions Log & Shared State**: An immutable log of verdicts, state transitions, and audit records shared across all participants.
+- **`@architect`** (OpenCode / Claude Code) builds the custom adapter in `./relayos-app`, runs automated pytest suites, and calculates dedicated infra cost.
+- **`@deal-desk`** takes those numbers and checks them mathematically against `Enterprise_Pricing_Playbook.md`.
+- **The Customer Portal** (`/t/acme`) lets the prospect request changes or accept proposals in real-time.
+- **Two-Party Human Approval**: The founder must sign off on the commercial counter, and the customer must digitally accept before a single dollar is billed or a tenant is deployed.
+- **Instant Zero-Touch Fulfillment**: The moment the customer signs, RelayOS provisions the isolated tenant at `/t/acme`, generates a legal dual-signed Order Form PDF, and issues the Stripe invoice.
 
 ---
 
-## 3. Step-by-Step: Writing Your First Declarative Switch Template
+## Why Switch? (And why an agent instead of a script?)
 
-Switch allows you to declare your entire multi-agent infrastructure in code. Below is the blueprint from our repository ([`switch/relayos.template.yaml`](https://github.com/aiwithrajan/RelayOS/blob/main/switch/relayos.template.yaml)):
+### Why an agent instead of a script?
+Because sales negotiations are **never the same shape twice**:
+- One prospect asks for higher RPM;
+- Another asks for Net-45 invoice terms;
+- A third submits a non-compliant price like **$21,000** that violates discount policy and needs founder exception review;
+- A fourth accepts an auto-compliant counter of **$23,000** on the spot.
 
-```yaml
-version: "1.0"
+A rigid script breaks whenever the customer counter-offers. An autonomous agent can navigate unstructured conversation, test candidate terms, and react dynamically.
 
-workspace:
-  name: "RelayOS Enterprise Deal Hub"
-  description: "Autonomous deal negotiation, engineering adapter verification, and deterministic playbook closing."
+### Why Switch instead of isolated chatbots?
+In enterprise sales, you **cannot** give a single AI agent unrestricted access to your entire codebase, your pricing authority, and your Stripe account. If an engineering agent that writes code is also given the `create_invoice` tool, a prompt injection or model hallucination could trigger unauthorized billing or discount agreements.
 
-channels:
-  - id: "relay-deal-room"
-    name: "acme-fintech-closing"
-    purpose: "Live closing session with Acme FinTech, Founder, @architect, and @deal-desk."
-    members:
-      - "founder"
-      - "acme_champion"
-      - "@architect"
-      - "@deal-desk"
-    instructions: |
-      This room is governed by RelayOS enterprise closing policies:
-      - @architect handles adapter code and infrastructure cost estimation only.
-      - @architect must NEVER quote prices, terms, or discounts.
-      - @deal-desk evaluates the pricing playbook against Rules R1 through R5.
-      - No tenant provisioning or invoicing can occur without Founder Approval and Customer Acceptance.
+Switch solves this at the architectural layer:
+1. **Declarative Multi-Agent Topology**: Defined in a single YAML file ([`switch/relayos.template.yaml`](https://github.com/aiwithrajan/RelayOS/blob/main/switch/relayos.template.yaml)).
+2. **Channel as Deal Room**: Everyone shares the same conversation history. The customer sees what the founder offers; the agents see what the customer requests.
+3. **Privilege Isolation**: `@architect` and `@deal-desk` run with separate FastMCP servers. An unauthorized tool call from `@architect` is blocked before it ever executes.
 
-agents:
-  - name: "@architect"
-    role: "Engineering Agent"
-    model: "claude-code" # Or OpenCode / Codex
-    working_directory: "./relayos-app"
-    description: "Builds customer adapters and verifies tests."
-    mcp_servers:
-      - name: "architect-mcp"
-        command: "python"
-        args: ["-m", "mcp.architect_tools"]
-        tools:
-          - "estimate_cost_tool"
-          - "run_adapter_tests"
-    permissions:
-      forbidden_tools:
-        - "create_invoice"
-        - "provision_tenant"
+---
 
-  - name: "@deal-desk"
-    role: "Finance & Operations Agent"
-    mcp_servers:
-      - name: "deal-desk-mcp"
-        command: "python"
-        args: ["-m", "mcp.deal_desk_tools"]
-        tools:
-          - "check_playbook_tool"
-          - "provision_tenant"
-          - "render_order_form"
-          - "create_invoice"
+## The Rule We Set on Day 1: The Playbook Decides, The Model Doesn't
+
+If an AI agent can hallucinate a discount or invent a profit margin, no enterprise CFO will ever allow it near a sales pipeline.
+
+So we instituted one non-negotiable rule:
+> **The Playbook decides, the model doesn't.**
+
+All commercial terms are governed by deterministic Python code in `core/playbook_engine.py`:
+
+### 1. Dedicated Infrastructure Cost Model
+$$\text{Annual Infra Cost} = \$1,000 + (\$7 \times \text{Allocated RPM})$$
+- **1,000 RPM (Initial Ask)**: $\$1,000 + (\$7 \times 1,000) = \mathbf{\$8,000/\text{year}}$
+- **600 RPM (Counter-Offer)**: $\$1,000 + (\$7 \times 600) = \mathbf{\$5,200/\text{year}}$
+
+### 2. The 5 Playbook Rules (`Enterprise_Pricing_Playbook.md`)
+* **Rule R1 (Margin Floor)**: Gross Margin $\ge 75.0\%$. $\text{Margin} = (\text{Price} - \text{Infra Cost}) / \text{Price}$.
+* **Rule R2 (Discount Authority)**: Enterprise list price is $\$24,000$/yr. Maximum unapproved discount is **10.0%** (price floor $\mathbf{\$21,600}$).
+* **Rule R3 (Setup Fee)**: $\$2,500$ standard fee; waived if Price $\ge \$20,000$ and Term $\ge 12$ months.
+* **Rule R4 (Payment Terms)**: Net-15 or Net-30 allowed without exception; Net-60 requires founder override.
+* **Rule R5 (White-Label)**: Enterprise tier only (included).
+
+Every decision logs the exact rules that passed or failed. Zero guessing.
+
+---
+
+## Anatomy of a 2-Minute Deal: The Real Trace Log
+
+Here is the actual execution trace of our demo deal, straight from our recorded transcripts and live Vercel backend:
+
+```text
+[00:02.1] FOUNDER ➔ KICKOFF
+  💬 "@architect Acme FinTech asks for 4 things: ERP adapter, 1,000 RPM quota, white-label at /t/acme, and $20,000/yr. Build the adapter and estimate dedicated infra cost."
+
+[00:14.5] @ARCHITECT ➔ RUN_ADAPTER_TESTS
+  ⚡ Verified ./relayos-app/acme_erp_adapter.py against SAP Treasury test suite.
+  ✓ 8/8 tests passed in 0.42s (FastMCP stdio: 12ms)
+
+[00:22.8] @ARCHITECT ➔ ESTIMATE_COST_TOOL
+  ⚡ Input: 1,000 RPM | Output: $8,000 / yr infra cost.
+  💬 "Adapter verified. Dedicated infra cost for 1,000 RPM is $8,000/year. Handoff to @deal-desk for pricing check."
+
+[00:35.4] @DEAL-DESK ➔ CHECK_PLAYBOOK_TOOL
+  📊 Inputs: Price $20,000, Cost $8,000, 1,000 RPM, List Price $24,000.
+  📊 Computed Margin: ($20,000 - $8,000) / $20,000 = 60.0%
+  ❌ FAILED Rule R1: 60.0% gross margin breaches 75.0% floor.
+  ❌ FAILED Rule R2: 16.7% discount breaches 10.0% maximum discount limit.
+  💬 "Initial ask fails pricing playbook (60.0% margin < 75% floor). Flagged to Founder."
+
+[00:46.0] SECURITY ENFORCEMENT TEST (AT-6)
+  🚨 @architect attempts to call `create_invoice` on the backend.
+  🛡️ RelayOS Gateway: HTTP 403 Forbidden!
+  🔒 Logged: UNAUTHORIZED_ACCESS_DENIED — @architect has no billing permissions.
+
+[01:09.2] ACME CHAMPION ➔ CUSTOMER_REQUEST_CHANGES
+  💬 "We propose $21,000/yr with 600 RPM capacity."
+  📊 @deal-desk evaluates $21k at 600 RPM ($5,200 cost):
+     - Margin: ($21,000 - $5,200) / $21,000 = 75.2% (Passes R1)
+     - Discount: ($24,000 - $21,000) / $24,000 = 12.5% > 10.0% limit (Fails R2: Floor is $21,600)
+  ⚠️ FLAGGED: Dispatched to Switch deal room #acme-fintech-closing for founder review.
+
+[01:35.0] ACME CHAMPION ➔ PROPOSE $23k COMPLIANT COUNTER
+  💬 "We can close today at $23,000/yr with 600 RPM capacity."
+  📊 @deal-desk evaluates $23k at 600 RPM ($5,200 cost):
+     - Margin: ($23,000 - $5,200) / $23,000 = 77.4% (Passes R1 >= 75%)
+     - Discount: 4.2% <= 10.0% (Passes R2)
+     - Rules R1, R2, R3, R4, R5: ALL PASS!
+  ⚡ AUTO-APPROVED by Playbook Compliance! Unlocked for direct customer signature.
+
+[01:57.4] ACME CHAMPION ➔ ACCEPT_PROPOSAL
+  ✍️ Digital acceptance recorded.
+  🚀 Autonomous 5-step fulfillment triggered:
+     1. Tenant provisioned at /t/acme with 600 RPM sliding-window rate limiting.
+     2. ReportLab executes binding Order Form PDF with dual cryptographic signatures.
+     3. Stripe electronic invoice generated.
+  ✓ Deal 100% Closed & Live in 2 minutes and 34 seconds!
 ```
 
-### Why this structure is so powerful:
-- **Zero Ambiguity**: Each agent's duties are hardcoded in the declarative spec.
-- **Multi-Factor Privilege Isolation**: Even if `@architect` gets prompted by a user to issue an invoice, Switch strips the `create_invoice` tool from its tool context. Furthermore, the backend enforces an **HTTP 403 Forbidden** security denial if an unauthorized caller attempts a direct call.
+---
+
+## The Four Scenarios: How RelayOS Handles Any Offer
+
+| Scenario | Annual Price | Quota | Dedicated Cost | Gross Margin | Discount % | Playbook Verdict | Action Taken |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1. Acme Initial Ask (v1)** | $20,000 | 1,000 RPM | $8,000 | **60.0%** | 16.7% | **FAIL (R1, R2)** | Founder review required; counter generated |
+| **2. Non-Compliant Offer** | $21,000 | 600 RPM | $5,200 | **75.2%** | **12.5%** | **FAIL (R2)** | Flagged! Discount violates $21,600 floor |
+| **3. Cap RPM Only** | $20,000 | 600 RPM | $5,200 | **74.0%** | 16.7% | **FAIL (R1, R2)** | Fails both margin floor and discount limit |
+| **4. Compliant Counter** | **$23,000** | **600 RPM** | **$5,200** | **77.4%** | **4.2%** | **PASS (R1–R5)** | **Auto-Approved!** Unlocks instant signature |
 
 ---
 
-## 4. Real-World Case Study: How RelayOS Closes a Deal in 2 Minutes
+## Three-Factor Privilege Isolation: Why Security Matters
 
-Let's look at how RelayOS executes this workflow step-by-step:
+In enterprise software, giving an AI agent write-access to money is terrifying. We built three layers of defense:
 
-### Step 1: The Prospect's Non-Standard Ask ($20k / 1,000 RPM)
-Acme FinTech asks for a custom SAP Treasury adapter, a high 1,000 requests/minute quota, white-label branding, and a discounted price of $20,000/yr (against $24,000 list).
-
-### Step 2: @architect Estimates Dedicated Cost
-In Switch, `@architect` builds `relayos-app/acme_erp_adapter.py`, runs `pytest` (passing 8/8 tests), and executes the cost model tool:
-$$\text{Cost} = \$1,000 + (\$7 \times 1,000\text{ RPM}) = \$8,000/\text{year}$$
-
-### Step 3: @deal-desk Evaluates the Pricing Playbook
-`@deal-desk` takes the numbers and checks company policy deterministically (zero LLM hallucination):
-- **Gross Margin**: $(\$20,000 - \$8,000) / \$20,000 = 60.0\%$
-- **Verdict**: **FAIL ❌** (Fails **Rule R1**: 60% < 75% margin floor; fails **Rule R2**: 16.7% discount exceeds 10% maximum limit).
-
-### Step 4: The Customer's Non-Compliant Revision ($21,000 Offer)
-In the Customer Portal, Acme proposes $21,000 at 600 RPM.
-- Cost drops to $\$1,000 + (\$7 \times 600) = \$5,200/\text{year}$.
-- Margin is $(\$21,000 - \$5,200) / \$21,000 = 75.2\%$ (passes R1).
-- **BUT Rule R2 Fails**: $(24,000 - 21,000) / 24,000 = 12.5\%$ discount, which breaches the 10.0% unapproved discount limit ($21,600 floor).
-- Switch flags the offer in real-time and dispatches it to `#acme-fintech-closing` for founder exception review.
-
-### Step 5: The Compliant Counter & Instant Auto-Approval ($23,000 Offer)
-Acme counter-proposes $23,000 at 600 RPM.
-- Margin: $(\$23,000 - \$5,200) / \$23,000 = 77.4\%$ (passes R1).
-- Discount: $4.2\% \le 10.0\%$ (passes R2).
-- Rules R1 through R5 **ALL PASS**!
-- RelayOS **auto-approves** the proposal on the spot and unlocks digital signature.
-
-### Step 6: Customer Signs & Autonomous Zero-Touch Fulfillment
-When the customer clicks **Accept Proposal**, RelayOS executes 5 steps automatically:
-1. Provisions isolated tenant at `/t/acme` with dedicated 600 RPM sliding-window rate limiting.
-2. Generates an executed, dual-signature **Order Form PDF** using ReportLab.
-3. Issues a Stripe electronic invoice.
-4. Updates God-Mode Mission Control with a cryptographic audit trail.
+1. **Factor 1 (Addressing & Scope)**: In `switch/relayos.template.yaml`, `@architect`'s working directory is strictly locked to `./relayos-app`. It cannot modify pricing files or templates.
+2. **Factor 2 (FastMCP Tool Stripping)**: `@architect`'s FastMCP server only registers `run_adapter_tests` and `estimate_cost_tool`. It has no knowledge of `create_invoice` or `provision_tenant`.
+3. **Factor 3 (Server-Side Gate Enforcement)**: Even if an attacker compromises `@architect` and makes a direct HTTP call to `/api/v1/agent-tools/create-invoice`, RelayOS inspects the `caller` attribute and `X-Agent-Role` header. The request is immediately rejected with **HTTP 403 Forbidden** and logged to our tamper-evident audit table (Acceptance Test **AT-6**).
 
 ---
 
-## 5. Pro-Tips for First-Time Switch Builders
+## The Two-Party Human Gate: No Rogue Executions
 
-1. **Keep Business Logic Deterministic**:
-   Don't ask an LLM *"Do you think this price is fair?"* LLMs hallucinate numbers. Use Switch agents to collect inputs and coordinate actions, but run calculations through deterministic Python code.
-2. **Enforce Three-Factor Security Isolation**:
-   - **Factor 1 (Addressing)**: Deal desk agents should only take orders from designated executive roles.
-   - **Factor 2 (Scope)**: Code agents should only have filesystem access to their specific workspace directory.
-   - **Factor 3 (Tools)**: Never give billing or provisioning tools to code-generation agents.
-3. **Build a "Zero-Key Replay Mode"**:
-   For hackathons and user demos, always build an offline replay script ([`replay/replay_runner.py`](https://github.com/aiwithrajan/RelayOS/blob/main/replay/replay_runner.py)) that feeds pre-recorded transcripts into your local state machine. This allows judges and users to test your app instantly without API keys or setup friction.
+Even with deterministic pricing, no software should bill a customer without human consent. 
+
+RelayOS enforces a strict state machine:
+$$\text{DRAFT} \longrightarrow \text{PRICE\_CHECKED} \longrightarrow \text{FOUNDER\_APPROVED} \longrightarrow \text{CUSTOMER\_ACCEPTED} \longrightarrow \text{PROVISIONED} \longrightarrow \text{INVOICED}$$
+
+Fulfillment tools (`provision_tenant`, `render_order_form`, `create_invoice`) verify that the deal state is strictly `CUSTOMER_ACCEPTED`. If called beforehand, they abort with an **HTTP 400 Bad Request**.
 
 ---
 
-## 6. Try RelayOS Live!
+## A Tour of the Application
 
-- 🌐 **Live Demo (Vercel)**: [https://relayos-seven.vercel.app/god-mode](https://relayos-seven.vercel.app/god-mode)
-- 🏢 **Customer Portal**: [https://relayos-seven.vercel.app/t/acme](https://relayos-seven.vercel.app/t/acme)
-- 💻 **Open-Source GitHub**: [https://github.com/aiwithrajan/RelayOS](https://github.com/aiwithrajan/RelayOS)
-- 🎥 **Master 1080p Demo Video**: [Stream Live](https://relayos-seven.vercel.app/demo-video)
+### 1. Admin Mission Control (`/god-mode`)
+The founder's command center:
+- Live KPI cards: Total Deals, 92% Win Rate, $240K Closed, 2.8 min Average Deal Time.
+- Interactive Pricing Playbook modal displaying Rules R1 through R5 and the Cost Model formula.
+- Active Deal Workflow stepper tracking real-time status.
+- Terminal log viewer with a **"Test Security Isolation"** button that proves `@architect` is blocked with HTTP 403.
+
+### 2. Customer Enterprise Portal (`/t/acme`)
+The customer's personalized proposal view:
+- Proposal terms, rate limits, white-label benefits, and engineering deliverables.
+- **Request Changes modal** with preset quick chips:
+  - `⚠️ Propose $21k (Review Needed)` — Demonstrates Rule R2 floor flagging.
+  - `💰 Propose $23k (Auto-Pass!)` — Demonstrates auto-compliance and direct signature unlocking.
+- Live Updates feed reflecting the `#acme-fintech-closing` Switch deal room in real-time.
+- One-click **Accept Proposal** button that triggers zero-touch fulfillment.
+
+---
+
+## How to Run It (Zero-Key Replay Mode)
+
+We wanted hackathon judges and developers to test RelayOS without having to sign up for paid API keys or set up complicated cloud accounts.
+
+### 1. Run Live on Vercel
+- **Admin Dashboard**: [https://relayos-seven.vercel.app/god-mode](https://relayos-seven.vercel.app/god-mode)
+- **Customer Portal**: [https://relayos-seven.vercel.app/t/acme](https://relayos-seven.vercel.app/t/acme)
+- **REST Health Check**: [https://relayos-seven.vercel.app/health](https://relayos-seven.vercel.app/health)
+
+### 2. Run Locally in 3 Steps
+```bash
+git clone https://github.com/aiwithrajan/RelayOS.git
+cd RelayOS
+uv sync --project core
+```
+
+### 3. Run the Master Acceptance Test Suite
+All 8 acceptance tests (AT-1 through AT-8, 32 test cases) run in under 7 seconds:
+```bash
+uv run --project core pytest
+```
+
+### 4. Run the Zero-Key Replay
+Replay the entire recorded deal run through our backend state machine and ReportLab PDF generator without touching an LLM:
+```bash
+./scripts/demo_up.sh --replay
+```
+
+---
+
+## What We Learned Building on Switch
+
+1. **The playbook decides, the model doesn't.** LLMs are great at conversational steering and unstructured text parsing, but terrible at deterministic financial math. Keep your business rules in pure Python.
+2. **Isolation must be multi-factor.** Merely telling an agent *"Please don't call the billing tool"* in a system prompt is not security. You need tool-level stripping via FastMCP and server-side HTTP 403 verification.
+3. **Humans in the loop shouldn't cause latency.** By embedding human approvals directly as interactive decision states in the deal room, approvals happen in seconds rather than waiting on calendar invites.
+4. **Deterministic replay makes testing effortless.** Building an offline replay mode ([`replay/replay_runner.py`](https://github.com/aiwithrajan/RelayOS/blob/main/replay/replay_runner.py)) allowed us to test our state machine hundreds of times without consuming API credits or waiting on LLM inference.
+
+---
+
+## Source Code & Resources
+
+- 💻 **GitHub Repository**: [https://github.com/aiwithrajan/RelayOS](https://github.com/aiwithrajan/RelayOS)
+- 🌐 **Live Vercel App**: [https://relayos-seven.vercel.app/god-mode](https://relayos-seven.vercel.app/god-mode)
+- 🎥 **1080p Master Demo Video**: [Stream Video](https://relayos-seven.vercel.app/demo-video)
 - 📜 **Enterprise Pricing Playbook Spec**: [Read Spec](https://github.com/aiwithrajan/RelayOS/blob/main/Enterprise_Pricing_Playbook.md)
+- 📄 **Declarative Switch Template**: [View Template](https://github.com/aiwithrajan/RelayOS/blob/main/switch/relayos.template.yaml)
 
 ---
 *Built for the Flip the Switch Hackathon (Track 01: Best Business Workflow) by Rajan Mishra.*
