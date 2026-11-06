@@ -1,5 +1,6 @@
 """RelayOS — Automated Production Demo Recording Script
 Generates a continuous, broadcast-quality 1080p MP4 recording with synchronized AI voiceover.
+Duration: ~2m 34s (under 3 minutes), showcasing both non-compliant $21k offer and compliant $23k counter.
 """
 import os
 import re
@@ -22,7 +23,7 @@ SCENES = [
     {
         "id": "scene1_intro",
         "title": "Introduction to RelayOS & God-Mode Control Plane",
-        "text": "Welcome to RelayOS, the autonomous enterprise deal closing platform built for the Flip the Switch Hackathon. In traditional enterprise sales, closing a contract takes weeks of manual pricing reviews, security approvals, and DevOps provisioning tickets. RelayOS compresses that entire lifecycle into a single autonomous Switch session.",
+        "text": "Welcome to RelayOS, the autonomous enterprise deal closing platform built for the Flip the Switch Hackathon. In traditional enterprise sales, closing a contract takes weeks of manual pricing spreadsheets, security reviews, and DevOps provisioning tickets. RelayOS compresses that entire friction-filled lifecycle into a single autonomous Switch session.",
     },
     {
         "id": "scene2_playbook",
@@ -32,22 +33,27 @@ SCENES = [
     {
         "id": "scene3_isolation",
         "title": "Initial Ask v1 & Security Isolation Enforcement (AT-1, AT-6)",
-        "text": "Here in God-Mode Mission Control, Acme FinTech initially requested twenty thousand dollars at one thousand RPM. Deal-Desk flags this ask: the sixty percent gross margin breaches our seventy-five percent floor. And when an unauthorized agent attempts to invoke billing tools, RelayOS immediately blocks it with an HTTP 403 security denial.",
+        "text": "Here in God-Mode Mission Control, Acme FinTech initially requested twenty thousand dollars at one thousand RPM. Deal-Desk immediately flags this ask: the sixty percent gross margin breaches our seventy-five percent floor. And when an unauthorized agent attempts to invoke billing tools, RelayOS immediately blocks it with an HTTP 403 security denial.",
     },
     {
-        "id": "scene4_customer",
-        "title": "Customer Enterprise Portal & Compliant Proposal Flow",
-        "text": "Over in the Customer Portal at slash t slash acme, the client champion reviews their tailored proposal and requests adjustments. Proposing twenty-three thousand dollars at six hundred RPM yields a compliant seventy-seven point four percent gross margin. The Playbook engine auto-approves the counter and immediately unlocks the deal for direct signature.",
+        "id": "scene4_request_21k",
+        "title": "Customer Portal & Non-Compliant $21k Offer (Rule R2 Floor Breach)",
+        "text": "Next, let's look at the customer negotiation workflow in the portal at slash t slash acme. The client champion requests custom adjustments, proposing twenty-one thousand dollars at six hundred RPM. RelayOS checks the pricing playbook in real-time. Because twenty-one thousand represents a twelve point five percent discount, it breaches Rule R2's ten percent limit and is flagged for founder review.",
     },
     {
-        "id": "scene5_fulfillment",
-        "title": "Digital Signature & Zero-Touch Autonomous Fulfillment",
-        "text": "The moment the customer signs, RelayOS triggers instant zero-touch fulfillment. The workflow completes in real-time, provisioning an isolated tenant with guaranteed six hundred RPM capacity, generating a legally binding dual-signature Order Form PDF, and issuing the Stripe electronic invoice.",
+        "id": "scene5_counter_23k",
+        "title": "Compliant $23k Counter-Offer & Automated Playbook Approval",
+        "text": "To close immediately without waiting for exception approvals, the customer selects the compliant twenty-three thousand dollar counter at six hundred RPM. The Playbook engine calculates a seventy-seven point four percent gross margin, passing all rules R1 through R5. RelayOS auto-approves the proposal on the spot and unlocks direct signature.",
     },
     {
-        "id": "scene6_conclusion",
-        "title": "Closed-Loop Verification & Summary",
-        "text": "From prospect request to revenue in one autonomous Switch session. RelayOS is verifiable, compliant, and lightning-fast. All code, test suites, and replay transcripts are open source on GitHub. Thank you!",
+        "id": "scene6_fulfillment",
+        "title": "Digital Signature & Zero-Touch Autonomous Fulfillment (AT-7, AT-8)",
+        "text": "The moment the customer clicks Accept Proposal, RelayOS triggers instant zero-touch fulfillment. The workflow provisions an isolated tenant with guaranteed six hundred RPM capacity, generates a legally binding dual-signature Order Form PDF, and issues the Stripe electronic invoice.",
+    },
+    {
+        "id": "scene7_conclusion",
+        "title": "Closed-Loop Verification in God-Mode & Summary",
+        "text": "Returning to God-Mode, we verify the completed loop. Acme FinTech is fully live, the audit trail is cryptographically logged, and deal time dropped from weeks to minutes. RelayOS is verified, compliant, and open source on GitHub. Thank you!",
     },
 ]
 
@@ -68,20 +74,20 @@ def generate_and_merge_voiceovers():
 
     for s in SCENES:
         out_file = VOICE_DIR / f"{s['id']}.mp3"
-        if not out_file.exists():
-            cmd = [
-                "uvx", "edge-tts",
-                "--voice", "en-US-ChristopherNeural",
-                "--text", s["text"],
-                "--write-media", str(out_file)
-            ]
-            subprocess.run(cmd, check=True)
+        # Always regenerate to ensure synchronization with current text
+        cmd = [
+            "uvx", "edge-tts",
+            "--voice", "en-US-ChristopherNeural",
+            "--text", s["text"],
+            "--write-media", str(out_file)
+        ]
+        subprocess.run(cmd, check=True)
         dur = get_audio_duration(out_file)
         durations[s["id"]] = dur
         scene_audios.append(out_file)
         print(f"  ✓ {s['id']}: {dur:.2f}s")
 
-    # Concatenate all 6 voiceovers into one seamless master audio file
+    # Concatenate all 7 voiceovers into one seamless master audio file
     concat_list = VOICE_DIR / "audio_concat.txt"
     with open(concat_list, "w") as f:
         for a in scene_audios:
@@ -94,7 +100,7 @@ def generate_and_merge_voiceovers():
     ], check=True)
 
     total_dur = get_audio_duration(master_audio)
-    print(f"🔊 Master Voiceover generated: {master_audio} ({total_dur:.2f}s)")
+    print(f"🔊 Master Voiceover generated: {master_audio} ({total_dur:.2f}s = {int(total_dur//60)}m {int(total_dur%60)}s)")
     return durations, total_dur, master_audio
 
 
@@ -115,6 +121,13 @@ def record_continuous_demo(durations, total_dur):
     reset_deal_state()
 
     raw_dir = RAW_VIDEO_DIR / "continuous"
+    # Clean up previous raw files in raw_dir
+    if raw_dir.exists():
+        for old_webm in raw_dir.glob("*.webm"):
+            try:
+                old_webm.unlink()
+            except Exception:
+                pass
     raw_dir.mkdir(exist_ok=True)
 
     with sync_playwright() as p:
@@ -129,12 +142,10 @@ def record_continuous_demo(durations, total_dur):
         )
         page = context.new_page()
 
-        start_time = time.time()
-
         # =====================================================================
         # SCENE 1: INTRO (Target: durations['scene1_intro'])
         # =====================================================================
-        scene1_end = start_time + durations["scene1_intro"]
+        scene1_end = time.time() + durations["scene1_intro"]
         print("  ▶ Scene 1: Intro & God-Mode Dashboard...")
         page.goto("http://localhost:8000/god-mode", wait_until="networkidle")
         time.sleep(2.0)
@@ -151,7 +162,6 @@ def record_continuous_demo(durations, total_dur):
         # Smooth scroll to preview deal workflow
         page.evaluate("window.scrollBy({ top: 140, behavior: 'smooth' })")
         time.sleep(3.0)
-        # Wait remainder of scene 1
         rem1 = scene1_end - time.time()
         if rem1 > 0:
             time.sleep(rem1)
@@ -202,10 +212,10 @@ def record_continuous_demo(durations, total_dur):
             time.sleep(rem3)
 
         # =====================================================================
-        # SCENE 4: CUSTOMER PORTAL & COUNTER (Target: durations['scene4_customer'])
+        # SCENE 4: CUSTOMER PORTAL & $21k NON-COMPLIANT FLOW (Target: durations['scene4_request_21k'])
         # =====================================================================
-        scene4_end = time.time() + durations["scene4_customer"]
-        print("  ▶ Scene 4: Customer Portal & $23k Counter Proposal...")
+        scene4_end = time.time() + durations["scene4_request_21k"]
+        print("  ▶ Scene 4: Customer Portal & $21,000 Non-Compliant Request...")
         page.goto("http://localhost:8000/t/acme", wait_until="networkidle")
         time.sleep(2.5)
         page.mouse.move(400, 420)
@@ -213,24 +223,52 @@ def record_continuous_demo(durations, total_dur):
         # Click Request Changes
         page.locator("#rejectBtn").click()
         time.sleep(2.0)
-        # Select $23k Auto-Pass preset chip
-        page.locator("button.preset-chip:has-text('Propose $23k')").click()
+        # Select $21k (Review Needed) preset chip
+        chip21k = page.locator("#chip21k")
+        if chip21k.count() > 0:
+            chip21k.click()
+        else:
+            page.locator("#modalPriceInput").fill("21000")
+            page.locator("#modalRpmInput").fill("600")
         time.sleep(2.0)
         # Submit to Switch Deal Room
         page.locator("#submitChangeRequestBtn").click()
-        time.sleep(3.5)
-        # Scroll down to Deal Workflow stepper
-        page.evaluate("window.scrollTo({ top: 380, behavior: 'smooth' })")
         time.sleep(3.0)
+        # Scroll slightly to show Deal Desk flagged entry in Live Updates
+        page.evaluate("window.scrollTo({ top: 380, behavior: 'smooth' })")
+        time.sleep(3.5)
         rem4 = scene4_end - time.time()
         if rem4 > 0:
             time.sleep(rem4)
 
         # =====================================================================
-        # SCENE 5: DIGITAL SIGNATURE & FULFILLMENT (Target: durations['scene5_fulfillment'])
+        # SCENE 5: COMPLIANT $23k COUNTER & AUTO-APPROVAL (Target: durations['scene5_counter_23k'])
         # =====================================================================
-        scene5_end = time.time() + durations["scene5_fulfillment"]
-        print("  ▶ Scene 5: Digital Signature & Instant Fulfillment...")
+        scene5_end = time.time() + durations["scene5_counter_23k"]
+        print("  ▶ Scene 5: $23,000 Compliant Counter & Auto-Approval...")
+        # Scroll back up to click Request Changes for counter
+        page.evaluate("window.scrollTo({ top: 80, behavior: 'smooth' })")
+        time.sleep(1.5)
+        page.locator("#rejectBtn").click()
+        time.sleep(2.0)
+        # Select $23k Auto-Pass preset chip
+        page.locator("#chip23k").click()
+        time.sleep(2.0)
+        # Submit to Switch Deal Room
+        page.locator("#submitChangeRequestBtn").click()
+        time.sleep(3.5)
+        # Scroll down to show Deal Workflow Stepper advancing to Customer Sign
+        page.evaluate("window.scrollTo({ top: 380, behavior: 'smooth' })")
+        time.sleep(3.0)
+        rem5 = scene5_end - time.time()
+        if rem5 > 0:
+            time.sleep(rem5)
+
+        # =====================================================================
+        # SCENE 6: DIGITAL SIGNATURE & FULFILLMENT (Target: durations['scene6_fulfillment'])
+        # =====================================================================
+        scene6_end = time.time() + durations["scene6_fulfillment"]
+        print("  ▶ Scene 6: Digital Signature & Instant Autonomous Fulfillment...")
         # Scroll up to decision center
         page.evaluate("window.scrollTo({ top: 80, behavior: 'smooth' })")
         time.sleep(1.5)
@@ -239,35 +277,35 @@ def record_continuous_demo(durations, total_dur):
         time.sleep(3.5)
         # Scroll down to watch real-time stepper complete all 5 steps
         page.evaluate("window.scrollTo({ top: 400, behavior: 'smooth' })")
-        time.sleep(4.0)
+        time.sleep(3.5)
         # Scroll back up to show Download Agreement & Open Live Tenant
         page.evaluate("window.scrollTo({ top: 80, behavior: 'smooth' })")
         time.sleep(2.0)
         page.mouse.move(860, 240)
         time.sleep(2.0)
-        rem5 = scene5_end - time.time()
-        if rem5 > 0:
-            time.sleep(rem5)
+        rem6 = scene6_end - time.time()
+        if rem6 > 0:
+            time.sleep(rem6)
 
         # =====================================================================
-        # SCENE 6: CONCLUSION & SUMMARY (Target: durations['scene6_conclusion'])
+        # SCENE 7: CONCLUSION & SUMMARY (Target: durations['scene7_conclusion'])
         # =====================================================================
-        scene6_end = time.time() + durations["scene6_conclusion"]
-        print("  ▶ Scene 6: Closed-Loop Verification in God-Mode...")
+        scene7_end = time.time() + durations["scene7_conclusion"]
+        print("  ▶ Scene 7: Closed-Loop Verification in God-Mode...")
         page.goto("http://localhost:8000/god-mode", wait_until="networkidle")
         time.sleep(2.5)
         # Scroll to completed Acme card
         page.evaluate("window.scrollTo({ top: 220, behavior: 'smooth' })")
-        time.sleep(3.0)
+        time.sleep(2.5)
         # Scroll to audit logs terminal
         page.evaluate("window.scrollTo({ top: 480, behavior: 'smooth' })")
-        time.sleep(3.0)
+        time.sleep(2.5)
         # Scroll up to hero banner
         page.evaluate("window.scrollTo({ top: 0, behavior: 'smooth' })")
         time.sleep(2.5)
-        rem6 = scene6_end - time.time()
-        if rem6 > 0:
-            time.sleep(rem6)
+        rem7 = scene7_end - time.time()
+        if rem7 > 0:
+            time.sleep(rem7)
 
         context.close()
         browser.close()

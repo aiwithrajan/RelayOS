@@ -379,7 +379,7 @@ def get_customer_feed_messages(deal_id: str) -> List[Dict[str, Any]]:
             except Exception:
                 details = {}
 
-        if action == "CHECK_PLAYBOOK" and details.get("version") == 1:
+        elif action == "CHECK_PLAYBOOK" and details.get("version") == 1:
             feed.append({
                 "id": l["id"],
                 "actor": "@deal-desk",
@@ -388,6 +388,19 @@ def get_customer_feed_messages(deal_id: str) -> List[Dict[str, Any]]:
                 "badge": "Automated",
                 "badge_color": "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
                 "message": "Initial proposal evaluated against pricing playbook. Standard enterprise discount limits flagged; escalated to Founder for counter-offer review.",
+                "timestamp": timestamp,
+            })
+        elif action == "PLAYBOOK_FLAGGED":
+            price_val = details.get("requested_price", 0)
+            reason_val = details.get("reason", "Breaches pricing playbook rules")
+            feed.append({
+                "id": l["id"],
+                "actor": "@deal-desk",
+                "role": "Compliance Engine",
+                "avatar": "⚠️",
+                "badge": "Flagged",
+                "badge_color": "bg-rose-500/20 text-rose-300 border-rose-500/30",
+                "message": f"Proposed terms (${price_val:,.0f}/yr) flagged: {reason_val}. Dispatched to Switch deal room for founder review.",
                 "timestamp": timestamp,
             })
         elif action == "REQUEST_CHANGES":
@@ -645,6 +658,30 @@ def customer_request_changes_endpoint(slug: str, req: CustomerChangeRequest):
                 },
             }
 
+        else:
+            # Terms violated one or more Playbook rules!
+            failed_rules = [r for r, s in candidate_verdict.rules.items() if s == "fail"]
+            rule_reasons = []
+            if "R2" in failed_rules:
+                rule_reasons.append("Rule R2: 12.5% discount exceeds 10% unapproved discount limit ($21,600 floor)")
+            if "R1" in failed_rules:
+                rule_reasons.append(f"Rule R1: {candidate_verdict.margin*100:.1f}% gross margin is below 75% floor")
+            flagged_reason = "; ".join(rule_reasons) if rule_reasons else "Breaches pricing playbook rules"
+
+            log_audit(
+                deal_id=deal.deal_id,
+                actor="@deal-desk",
+                action="PLAYBOOK_FLAGGED",
+                status="NON_COMPLIANT",
+                details={
+                    "requested_price": req.requested_price,
+                    "requested_rpm": target_rpm,
+                    "margin": candidate_verdict.margin,
+                    "failed_rules": failed_rules,
+                    "reason": flagged_reason,
+                },
+            )
+
     details: Dict[str, Any] = {
         "notes": req.notes or "Revision requested",
         "channel": f"Switch deal room #{slug}-fintech-closing",
@@ -662,10 +699,16 @@ def customer_request_changes_endpoint(slug: str, req: CustomerChangeRequest):
         details=details,
     )
 
+    resp_message = (
+        f"Non-compliant terms (${req.requested_price:,.0f}/yr) flagged by @deal-desk ({flagged_reason}). Dispatched to Switch deal room #{slug}-fintech-closing."
+        if (req.requested_price is not None and not candidate_verdict.passed)
+        else f"Change request for {deal.customer.name} dispatched to Switch deal room #{slug}-fintech-closing."
+    )
+
     return {
         "status": "success",
         "compliant": False,
-        "message": f"Change request for {deal.customer.name} dispatched to Switch deal room #{slug}-fintech-closing.",
+        "message": resp_message,
         "details": details,
     }
 

@@ -497,7 +497,10 @@
       <div class="flex flex-col gap-1.5">
         <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Quick Suggestions</label>
         <div class="flex flex-wrap gap-1.5 text-xs">
-          <button type="button" class="preset-chip px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition cursor-pointer" data-note="We can close today at $23,000/yr with 600 RPM capacity." data-price="23000" data-rpm="600">
+          <button type="button" id="chip21k" class="preset-chip px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 hover:text-white transition cursor-pointer" data-note="Customer proposes $21,000/yr with 600 RPM capacity." data-price="21000" data-rpm="600">
+            ⚠️ Propose $21k (Review Needed)
+          </button>
+          <button type="button" id="chip23k" class="preset-chip px-2.5 py-1 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 hover:text-white transition cursor-pointer" data-note="We can close today at $23,000/yr with 600 RPM capacity." data-price="23000" data-rpm="600">
             💰 Propose $23k (Auto-Pass!)
           </button>
           <button type="button" class="preset-chip px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition cursor-pointer" data-note="Requesting 800 RPM quota to handle month-end payroll spikes." data-rpm="800">
@@ -505,9 +508,6 @@
           </button>
           <button type="button" class="preset-chip px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition cursor-pointer" data-note="Requesting Net-45 invoice terms to align with treasury payout cycles.">
             📅 Net-45 Terms
-          </button>
-          <button type="button" class="preset-chip px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition cursor-pointer" data-note="Requires 99.95% enterprise uptime SLA with penalty credits.">
-            🛡️ 99.95% SLA
           </button>
         </div>
       </div>
@@ -858,9 +858,9 @@
             });
           } else {
             showToast({
-              type: 'info',
-              title: 'Change Request Dispatched',
-              message: 'Your revision request was sent to Switch deal room #acme-fintech-closing. The Founder & @deal-desk have been notified.'
+              type: 'warning',
+              title: 'Playbook Review Required ⚠️',
+              message: resData.message || 'Your revision request was sent to Switch deal room #acme-fintech-closing. The Founder & @deal-desk have been notified.'
             });
           }
         } else {
