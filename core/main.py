@@ -172,6 +172,16 @@ def get_document(filename: str):
     return FileResponse(file_path, media_type="application/pdf", filename=filename)
 
 
+@app.get("/demo-video")
+@app.get("/api/v1/demo-video")
+def get_demo_video_endpoint():
+    """Stream the official Flip the Switch Hackathon 1080p demo video."""
+    video_path = Path(__file__).resolve().parent.parent / "relay_os_demo.mp4"
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Demo video file not found")
+    return FileResponse(video_path, media_type="video/mp4", filename="relay_os_demo.mp4")
+
+
 # --- Core REST API Routes ---
 
 @app.get("/health")
