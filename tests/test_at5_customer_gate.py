@@ -123,3 +123,26 @@ def test_customer_request_changes_flow():
         change_logs = [l for l in logs if l["actor"] == "acme_champion" and l["action"] == "REQUEST_CHANGES"]
         assert len(change_logs) > 0
         assert "payroll spikes" in change_logs[0]["details"]
+
+
+def test_auto_compliant_terms_direct_signature():
+    """Verify that proposing compliant terms (e.g. $23,000 / 600 RPM) auto-updates proposal and unlocks direct signature."""
+    with TestClient(app) as client:
+        # Submit $23k at 600 RPM (Margin 77.4% >= 75%, list discount 4.2% <= 10%)
+        res = client.post(
+            "/api/v1/customer/proposal/acme/request-changes",
+            json={"requested_price": 23000.0, "requested_rpm": 600, "notes": "We can do $23,000 at 600 RPM"},
+        )
+        assert res.status_code == 200
+        assert res.json()["compliant"] is True
+
+        # Customer can immediately ACCEPT & SIGN directly without separate founder sign-off!
+        accept_res = client.post("/api/v1/customer/proposal/acme/accept")
+        assert accept_res.status_code == 200
+        assert accept_res.json()["state"] == "CUSTOMER_ACCEPTED"
+
+        # Verify DealSpec v2 recorded $23,000 price
+        deal = get_deal_spec("acme-2026-11")
+        assert deal.commercial.price_usd_year == 23000.0
+        assert deal.engineering.rate_limit_rpm == 600
+        assert deal.state == DealState.CUSTOMER_ACCEPTED

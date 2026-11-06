@@ -17,8 +17,8 @@ class DealState(str, Enum):
 VALID_TRANSITIONS: Dict[DealState, Set[DealState]] = {
     DealState.DRAFT: {DealState.ENGINEERED},
     DealState.ENGINEERED: {DealState.PRICE_CHECKED},
-    # If price check fails or needs counter-offer, can transition back to ENGINEERED with a new version
-    DealState.PRICE_CHECKED: {DealState.FOUNDER_APPROVED, DealState.ENGINEERED},
+    # If price check passes or founder counters, can transition to FOUNDER_APPROVED or directly to CUSTOMER_ACCEPTED if compliant
+    DealState.PRICE_CHECKED: {DealState.FOUNDER_APPROVED, DealState.CUSTOMER_ACCEPTED, DealState.ENGINEERED},
     # If customer rejects, can transition back to ENGINEERED with counter
     DealState.FOUNDER_APPROVED: {DealState.CUSTOMER_ACCEPTED, DealState.ENGINEERED},
     DealState.CUSTOMER_ACCEPTED: {DealState.PROVISIONED},

@@ -423,6 +423,20 @@ def get_customer_feed_messages(deal_id: str) -> List[Dict[str, Any]]:
                 "message": "Founder commercial sign-off recorded. Agreement unlocked for Acme FinTech signature.",
                 "timestamp": timestamp,
             })
+        elif action == "PLAYBOOK_AUTO_ACCEPT":
+            price_val = details.get("price", 0)
+            rpm_val = details.get("rate_limit_rpm", 0)
+            margin_val = details.get("margin", 0) * 100
+            feed.append({
+                "id": l["id"],
+                "actor": "@deal-desk",
+                "role": "Compliance Engine",
+                "avatar": "⚡",
+                "badge": "Auto-Approved",
+                "badge_color": "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+                "message": f"Proposed terms (${price_val:,.0f}/yr at {rpm_val} RPM) meet company pricing policy ({margin_val:.1f}% margin). Proposal auto-approved and unlocked for direct signature!",
+                "timestamp": timestamp,
+            })
         elif action == "ACCEPT_CUSTOMER":
             feed.append({
                 "id": l["id"],
@@ -501,7 +515,22 @@ def customer_accept_proposal(slug: str):
     if not deal or deal.customer.slug != slug:
         raise HTTPException(status_code=404, detail=f"No active proposal for '{slug}'")
 
-    if not can_transition(deal.state, DealState.CUSTOMER_ACCEPTED):
+    # If deal is in PRICE_CHECKED, check if the terms are compliant with the pricing playbook
+    if deal.state == DealState.PRICE_CHECKED:
+        if not deal.playbook or not deal.playbook.passed:
+            margin_str = f" (Margin {deal.playbook.margin*100:.1f}% < 75%)" if deal.playbook else ""
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot accept deal in state '{deal.state.value}': Current proposal does not meet pricing playbook rules{margin_str}. Compliant counter-offer required.",
+            )
+        # If playbook passed (e.g. $22k counter or compliant request), auto-record policy approval!
+        if not deal.approvals.founder:
+            deal.approvals.founder = ApprovalRecord(
+                approved_by="playbook_auto_compliance",
+                timestamp=datetime.utcnow().isoformat(),
+                notes=f"Auto-approved by Pricing Playbook compliance: ${deal.commercial.price_usd_year:,.0f}/yr at {deal.engineering.rate_limit_rpm} RPM ({deal.playbook.margin*100:.1f}% margin)",
+            )
+    elif not can_transition(deal.state, DealState.CUSTOMER_ACCEPTED):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot accept deal in state '{deal.state.value}': Founder must approve the proposal first",
@@ -541,10 +570,64 @@ class CustomerChangeRequest(BaseModel):
 
 @app.post("/api/v1/customer/proposal/{slug}/request-changes")
 def customer_request_changes_endpoint(slug: str, req: CustomerChangeRequest):
-    """Log a change request from customer champion and notify Switch room."""
+    """Log a change request. If the requested terms meet playbook rules, auto-update proposal for instant signature!"""
     deal = get_deal_spec("acme-2026-11")
     if not deal or deal.customer.slug != slug:
         raise HTTPException(status_code=404, detail=f"No active proposal for '{slug}'")
+
+    # If customer proposed explicit terms, test them against the pricing playbook!
+    if req.requested_price is not None:
+        target_rpm = req.requested_rpm or deal.engineering.rate_limit_rpm
+        target_cost = estimate_infra_cost(target_rpm)
+
+        candidate_spec = DealSpec(
+            deal_id=deal.deal_id,
+            version=deal.version + 1,
+            state=DealState.PRICE_CHECKED,
+            customer=deal.customer,
+            engineering=EngineeringSpec(
+                adapter=deal.engineering.adapter,
+                tests_passed=True,
+                rate_limit_rpm=target_rpm,
+                infra_cost_usd_year=target_cost,
+            ),
+            commercial=CommercialSpec(
+                price_usd_year=req.requested_price,
+                term_months=deal.commercial.term_months,
+                payment_terms=deal.commercial.payment_terms,
+                setup_fee_waived=True if req.requested_price >= 20000 else deal.commercial.setup_fee_waived,
+                white_label=deal.commercial.white_label,
+            ),
+        )
+        candidate_verdict = evaluate_playbook(candidate_spec)
+        candidate_spec.playbook = candidate_verdict
+
+        if candidate_verdict.passed:
+            # COMPLIANT! Automatically accept customer's terms into new DealSpec version!
+            save_deal_spec(candidate_spec)
+            log_audit(
+                deal_id=deal.deal_id,
+                actor="@deal-desk",
+                action="PLAYBOOK_AUTO_ACCEPT",
+                status="SUCCESS",
+                details={
+                    "version": candidate_spec.version,
+                    "price": candidate_spec.commercial.price_usd_year,
+                    "rate_limit_rpm": candidate_spec.engineering.rate_limit_rpm,
+                    "margin": candidate_verdict.margin,
+                    "note": f"Customer proposed terms (${candidate_spec.commercial.price_usd_year:,.0f}/yr at {candidate_spec.engineering.rate_limit_rpm} RPM) are compliant with pricing playbook (margin {candidate_verdict.margin*100:.1f}% >= 75%). Auto-approved and unlocked for direct signature!",
+                },
+            )
+            return {
+                "status": "success",
+                "compliant": True,
+                "message": f"Great news! Your proposed terms (${req.requested_price:,.0f}/yr at {target_rpm} RPM) meet company pricing compliance ({candidate_verdict.margin*100:.1f}% margin). Proposal auto-approved and unlocked for direct signature!",
+                "details": {
+                    "price": candidate_spec.commercial.price_usd_year,
+                    "rpm": candidate_spec.engineering.rate_limit_rpm,
+                    "margin": candidate_verdict.margin,
+                },
+            }
 
     details: Dict[str, Any] = {
         "notes": req.notes or "Revision requested",
@@ -565,6 +648,7 @@ def customer_request_changes_endpoint(slug: str, req: CustomerChangeRequest):
 
     return {
         "status": "success",
+        "compliant": False,
         "message": f"Change request for {deal.customer.name} dispatched to Switch deal room #{slug}-fintech-closing.",
         "details": details,
     }

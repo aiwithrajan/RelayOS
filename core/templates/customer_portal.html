@@ -422,12 +422,22 @@
         btn.innerHTML = '<span>Submit to Switch Deal Room</span><span>➔</span>';
 
         if (res.ok) {
+          const resData = await res.json();
           closeModal();
-          showToast({
-            type: 'success',
-            title: 'Change Request Dispatched',
-            message: 'Your revision request was sent to Switch deal room #acme-fintech-closing. The Founder & @deal-desk have been notified.'
-          });
+          loadProposal();
+          if (resData.compliant) {
+            showToast({
+              type: 'success',
+              title: 'Terms Compliant & Auto-Approved! ⚡',
+              message: resData.message || 'Your proposed terms meet company pricing policy and are ready for immediate signature below.'
+            });
+          } else {
+            showToast({
+              type: 'info',
+              title: 'Change Request Dispatched',
+              message: 'Your revision request was sent to Switch deal room #acme-fintech-closing. The Founder & @deal-desk have been notified.'
+            });
+          }
         } else {
           showToast({
             type: 'error',
