@@ -603,7 +603,13 @@ def customer_request_changes_endpoint(slug: str, req: CustomerChangeRequest):
         candidate_spec.playbook = candidate_verdict
 
         if candidate_verdict.passed:
-            # COMPLIANT! Automatically accept customer's terms into new DealSpec version!
+            # COMPLIANT! Automatically accept customer's terms into new DealSpec version & auto-approve!
+            candidate_spec.approvals.founder = ApprovalRecord(
+                approved_by="playbook_auto_compliance",
+                timestamp=datetime.utcnow().isoformat(),
+                notes=f"Auto-approved by Pricing Playbook compliance: ${candidate_spec.commercial.price_usd_year:,.0f}/yr at {candidate_spec.engineering.rate_limit_rpm} RPM ({candidate_verdict.margin*100:.1f}% margin)",
+            )
+            candidate_spec.state = DealState.FOUNDER_APPROVED
             save_deal_spec(candidate_spec)
             log_audit(
                 deal_id=deal.deal_id,

@@ -768,7 +768,14 @@
 
     // Dynamic Stepper Renderer
     function updateWorkflowStepper(state) {
-      const steps = ['stepEngineered', 'stepPriceChecked', 'stepFounderApproval', 'stepCustomerAcceptance', 'stepProvisioning', 'stepInvoiced'];
+      const stepConfigs = [
+        { id: 'stepEngineered', icon: '✓' },
+        { id: 'stepPriceChecked', icon: '✓' },
+        { id: 'stepFounderApproval', icon: '👤' },
+        { id: 'stepCustomerAcceptance', icon: '✍' },
+        { id: 'stepProvisioning', icon: '⚙' },
+        { id: 'stepInvoiced', icon: '📄' }
+      ];
       const progressText = document.getElementById('dealProgressText');
       const progressBar = document.getElementById('dealProgressBar');
 
@@ -776,38 +783,55 @@
       const activeClass = 'w-7 h-7 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/60 flex items-center justify-center text-xs font-bold ring-4 ring-blue-500/20 animate-pulse';
       const pendingClass = 'w-7 h-7 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs';
 
+      let completedCount = 0;
+      let activeIndex = -1;
+
       if (state === 'DRAFT' || state === 'ENGINEERED') {
-        document.getElementById('stepEngineered').className = activeClass;
-        document.getElementById('stepPriceChecked').className = pendingClass;
-        progressText.innerText = '20% Complete';
-        progressBar.style.width = '20%';
+        completedCount = 0;
+        activeIndex = 0;
+        progressText.innerText = '16% Complete';
+        progressBar.style.width = '16%';
       } else if (state === 'PRICE_CHECKED') {
-        document.getElementById('stepEngineered').className = completedClass;
-        document.getElementById('stepPriceChecked').className = completedClass;
-        document.getElementById('stepFounderApproval').className = activeClass;
-        document.getElementById('stepCustomerAcceptance').className = pendingClass;
+        completedCount = 2;
+        activeIndex = 2;
         progressText.innerText = '40% Complete';
         progressBar.style.width = '40%';
       } else if (state === 'FOUNDER_APPROVED') {
-        document.getElementById('stepEngineered').className = completedClass;
-        document.getElementById('stepPriceChecked').className = completedClass;
-        document.getElementById('stepFounderApproval').className = completedClass;
-        document.getElementById('stepCustomerAcceptance').className = activeClass;
+        completedCount = 3;
+        activeIndex = 3;
         progressText.innerText = '60% Complete';
         progressBar.style.width = '60%';
       } else if (state === 'CUSTOMER_ACCEPTED') {
-        document.getElementById('stepEngineered').className = completedClass;
-        document.getElementById('stepPriceChecked').className = completedClass;
-        document.getElementById('stepFounderApproval').className = completedClass;
-        document.getElementById('stepCustomerAcceptance').className = completedClass;
-        document.getElementById('stepProvisioning').className = activeClass;
+        completedCount = 4;
+        activeIndex = 4;
         progressText.innerText = '80% Complete';
         progressBar.style.width = '80%';
-      } else if (state === 'PROVISIONED' || state === 'INVOICED') {
-        steps.forEach(s => document.getElementById(s).className = completedClass);
+      } else if (state === 'PROVISIONED') {
+        completedCount = 5;
+        activeIndex = 5;
+        progressText.innerText = '90% Complete';
+        progressBar.style.width = '90%';
+      } else if (state === 'INVOICED') {
+        completedCount = 6;
+        activeIndex = -1;
         progressText.innerText = '100% Complete';
         progressBar.style.width = '100%';
       }
+
+      stepConfigs.forEach((cfg, idx) => {
+        const el = document.getElementById(cfg.id);
+        if (!el) return;
+        if (idx < completedCount) {
+          el.className = completedClass;
+          el.innerHTML = '✓';
+        } else if (idx === activeIndex) {
+          el.className = activeClass;
+          el.innerHTML = cfg.icon;
+        } else {
+          el.className = pendingClass;
+          el.innerHTML = cfg.icon;
+        }
+      });
     }
 
     // Polling Interval

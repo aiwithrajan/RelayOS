@@ -434,41 +434,57 @@
 
         <!-- Left: Deal Workflow Stepper (7 cols) -->
         <div class="lg:col-span-7 glass-card p-6 rounded-2xl flex flex-col gap-4">
-          <div>
-            <h3 class="text-sm font-bold text-white">Deal Workflow</h3>
-            <p class="text-[11px] text-slate-400">Real-time progress of your enterprise proposal</p>
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-white">Deal Workflow</h3>
+              <p class="text-[11px] text-slate-400">Real-time progress of your enterprise proposal</p>
+            </div>
+            <span id="wfGlobalStatusBadge" class="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 transition">Initializing...</span>
           </div>
 
-          <!-- Stepper Nodes -->
-          <div class="grid grid-cols-5 gap-2 pt-3 text-center font-mono">
-            <div class="flex flex-col items-center gap-1.5">
-              <div id="wfStep1" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-xs font-bold shadow">✓</div>
-              <span class="text-[10px] text-slate-300 font-bold">Proposal Ready</span>
-              <span class="text-[9px] text-slate-500">Completed</span>
+          <!-- Stepper Container with Horizontal Progress Bar -->
+          <div class="relative pt-4 pb-1">
+            <!-- Connecting Line Track -->
+            <div class="absolute top-[28px] left-[10%] right-[10%] h-0.5 bg-slate-800 -z-0">
+              <div id="wfProgressBar" class="h-full bg-gradient-to-r from-emerald-400 to-cyan-500 transition-all duration-500 rounded-full" style="width: 20%;"></div>
             </div>
 
-            <div class="flex flex-col items-center gap-1.5">
-              <div id="wfStep2" class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/60 flex items-center justify-center text-xs font-bold ring-4 ring-blue-500/20 animate-pulse">👤</div>
-              <span class="text-[10px] text-slate-300 font-bold">Founder Review</span>
-              <span class="text-[9px] text-slate-400">In Progress</span>
-            </div>
+            <!-- Stepper Nodes -->
+            <div class="grid grid-cols-5 gap-2 text-center font-mono relative z-10">
+              <!-- Step 1 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="wfStep1Circle" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-xs font-bold shadow transition-all duration-300">✓</div>
+                <span id="wfStep1Title" class="text-[10px] text-white font-bold">Proposal Ready</span>
+                <span id="wfStep1Status" class="text-[9px] text-emerald-400 font-medium">Completed</span>
+              </div>
 
-            <div class="flex flex-col items-center gap-1.5">
-              <div id="wfStep3" class="w-8 h-8 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs font-bold">✍</div>
-              <span class="text-[10px] text-slate-400">Customer Sign</span>
-              <span class="text-[9px] text-slate-600">Pending</span>
-            </div>
+              <!-- Step 2 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="wfStep2Circle" class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/60 flex items-center justify-center text-xs font-bold ring-4 ring-blue-500/20 animate-pulse transition-all duration-300">👤</div>
+                <span id="wfStep2Title" class="text-[10px] text-slate-300 font-bold">Founder Review</span>
+                <span id="wfStep2Status" class="text-[9px] text-slate-400">In Progress</span>
+              </div>
 
-            <div class="flex flex-col items-center gap-1.5">
-              <div id="wfStep4" class="w-8 h-8 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs font-bold">⚙</div>
-              <span class="text-[10px] text-slate-400">Provisioning</span>
-              <span class="text-[9px] text-slate-600">Pending</span>
-            </div>
+              <!-- Step 3 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="wfStep3Circle" class="w-8 h-8 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs font-bold transition-all duration-300">✍</div>
+                <span id="wfStep3Title" class="text-[10px] text-slate-400">Customer Sign</span>
+                <span id="wfStep3Status" class="text-[9px] text-slate-600">Pending</span>
+              </div>
 
-            <div class="flex flex-col items-center gap-1.5">
-              <div id="wfStep5" class="w-8 h-8 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs font-bold">📄</div>
-              <span class="text-[10px] text-slate-400">Invoicing</span>
-              <span class="text-[9px] text-slate-600">Pending</span>
+              <!-- Step 4 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="wfStep4Circle" class="w-8 h-8 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs font-bold transition-all duration-300">⚙</div>
+                <span id="wfStep4Title" class="text-[10px] text-slate-400">Provisioning</span>
+                <span id="wfStep4Status" class="text-[9px] text-slate-600">Pending</span>
+              </div>
+
+              <!-- Step 5 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="wfStep5Circle" class="w-8 h-8 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs font-bold transition-all duration-300">📄</div>
+                <span id="wfStep5Title" class="text-[10px] text-slate-400">Invoicing</span>
+                <span id="wfStep5Status" class="text-[9px] text-slate-600">Pending</span>
+              </div>
             </div>
           </div>
         </div>
@@ -715,27 +731,99 @@
 
     // Update Customer Workflow Stepper
     function updateCustomerWorkflow(state) {
-      const activeClass = 'w-8 h-8 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/60 flex items-center justify-center text-xs font-bold ring-4 ring-blue-500/20 animate-pulse';
-      const completedClass = 'w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-xs font-bold shadow';
-      const pendingClass = 'w-8 h-8 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs font-bold';
+      const activeClass = 'w-8 h-8 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/60 flex items-center justify-center text-xs font-bold ring-4 ring-blue-500/20 animate-pulse transition-all duration-300';
+      const completedClass = 'w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-xs font-bold shadow transition-all duration-300';
+      const pendingClass = 'w-8 h-8 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs font-bold transition-all duration-300';
 
-      if (state === 'DRAFT' || state === 'ENGINEERED' || state === 'PRICE_CHECKED') {
-        document.getElementById('wfStep1').className = completedClass;
-        document.getElementById('wfStep2').className = activeClass;
-        document.getElementById('wfStep3').className = pendingClass;
+      const steps = [
+        { id: 1, circle: 'wfStep1Circle', title: 'wfStep1Title', status: 'wfStep1Status', icon: '⚡' },
+        { id: 2, circle: 'wfStep2Circle', title: 'wfStep2Title', status: 'wfStep2Status', icon: '👤' },
+        { id: 3, circle: 'wfStep3Circle', title: 'wfStep3Title', status: 'wfStep3Status', icon: '✍' },
+        { id: 4, circle: 'wfStep4Circle', title: 'wfStep4Title', status: 'wfStep4Status', icon: '⚙' },
+        { id: 5, circle: 'wfStep5Circle', title: 'wfStep5Title', status: 'wfStep5Status', icon: '📄' }
+      ];
+
+      // Step statuses: 1 = completed, 0 = active, -1 = pending
+      let stepStates = [-1, -1, -1, -1, -1];
+      let progressPercent = 0;
+      let globalBadgeText = 'Connecting...';
+      let globalBadgeColor = 'bg-slate-800 text-slate-400 border-slate-700';
+
+      if (state === 'DRAFT' || state === 'ENGINEERED') {
+        stepStates = [0, -1, -1, -1, -1];
+        progressPercent = 10;
+        globalBadgeText = 'Step 1 of 5 • Proposal Initializing';
+        globalBadgeColor = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+      } else if (state === 'PRICE_CHECKED') {
+        stepStates = [1, 0, -1, -1, -1];
+        progressPercent = 30;
+        globalBadgeText = 'Step 2 of 5 • Founder Review';
+        globalBadgeColor = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
       } else if (state === 'FOUNDER_APPROVED') {
-        document.getElementById('wfStep1').className = completedClass;
-        document.getElementById('wfStep2').className = completedClass;
-        document.getElementById('wfStep3').className = activeClass;
+        stepStates = [1, 1, 0, -1, -1];
+        progressPercent = 55;
+        globalBadgeText = 'Step 3 of 5 • Ready for Customer Sign';
+        globalBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
       } else if (state === 'CUSTOMER_ACCEPTED') {
-        document.getElementById('wfStep1').className = completedClass;
-        document.getElementById('wfStep2').className = completedClass;
-        document.getElementById('wfStep3').className = completedClass;
-        document.getElementById('wfStep4').className = activeClass;
-      } else if (state === 'PROVISIONED' || state === 'INVOICED') {
-        ['wfStep1', 'wfStep2', 'wfStep3', 'wfStep4', 'wfStep5'].forEach(s => {
-          document.getElementById(s).className = completedClass;
-        });
+        stepStates = [1, 1, 1, 0, -1];
+        progressPercent = 80;
+        globalBadgeText = 'Step 4 of 5 • Auto Provisioning';
+        globalBadgeColor = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+      } else if (state === 'PROVISIONED') {
+        stepStates = [1, 1, 1, 1, 0];
+        progressPercent = 90;
+        globalBadgeText = 'Step 5 of 5 • Creating Invoice';
+        globalBadgeColor = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+      } else if (state === 'INVOICED') {
+        stepStates = [1, 1, 1, 1, 1];
+        progressPercent = 100;
+        globalBadgeText = '✓ Deal 100% Closed & Live';
+        globalBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+      }
+
+      // Update UI for each step
+      steps.forEach((s, idx) => {
+        const circleEl = document.getElementById(s.circle);
+        const titleEl = document.getElementById(s.title);
+        const statusEl = document.getElementById(s.status);
+        if (!circleEl) return;
+
+        const st = stepStates[idx];
+        if (st === 1) {
+          circleEl.className = completedClass;
+          circleEl.innerHTML = '✓';
+          if (titleEl) titleEl.className = 'text-[10px] text-white font-bold';
+          if (statusEl) {
+            statusEl.className = 'text-[9px] text-emerald-400 font-medium';
+            statusEl.innerText = 'Completed';
+          }
+        } else if (st === 0) {
+          circleEl.className = activeClass;
+          circleEl.innerHTML = s.icon;
+          if (titleEl) titleEl.className = 'text-[10px] text-cyan-300 font-bold';
+          if (statusEl) {
+            statusEl.className = 'text-[9px] text-blue-400 font-semibold';
+            statusEl.innerText = 'In Progress';
+          }
+        } else {
+          circleEl.className = pendingClass;
+          circleEl.innerHTML = s.icon;
+          if (titleEl) titleEl.className = 'text-[10px] text-slate-400';
+          if (statusEl) {
+            statusEl.className = 'text-[9px] text-slate-600';
+            statusEl.innerText = 'Pending';
+          }
+        }
+      });
+
+      // Update progress bar & global badge
+      const bar = document.getElementById('wfProgressBar');
+      if (bar) bar.style.width = `${progressPercent}%`;
+
+      const badge = document.getElementById('wfGlobalStatusBadge');
+      if (badge) {
+        badge.innerText = globalBadgeText;
+        badge.className = `text-[10px] font-mono px-2.5 py-0.5 rounded-full border ${globalBadgeColor} transition`;
       }
     }
 
@@ -835,9 +923,41 @@
           showToast({
             type: 'success',
             title: 'Agreement Signed ✓',
-            message: 'Commercial agreement confirmed. Tenant provisioning is now unlocked!'
+            message: 'Commercial agreement confirmed. Launching automated fulfillment...'
           });
-          loadProposal();
+          await loadProposal();
+
+          // Immediately execute autonomous zero-touch fulfillment sequence
+          try {
+            await fetch('/api/v1/agent-tools/provision-tenant', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ deal_id: 'acme-2026-11' })
+            });
+            await loadProposal();
+
+            await fetch('/api/v1/agent-tools/render-order-form', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ deal_id: 'acme-2026-11' })
+            });
+            await loadProposal();
+
+            await fetch('/api/v1/agent-tools/create-invoice', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ deal_id: 'acme-2026-11' })
+            });
+            await loadProposal();
+
+            showToast({
+              type: 'success',
+              title: 'Deal 100% Fulfilled! 🚀',
+              message: 'Tenant provisioned at /t/acme, Order Form PDF generated, and Stripe invoice issued.'
+            });
+          } catch (fulfillErr) {
+            console.error('Autonomous fulfillment error:', fulfillErr);
+          }
         } else {
           const err = await res.json();
           showToast({
