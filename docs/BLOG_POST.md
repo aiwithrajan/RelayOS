@@ -81,6 +81,9 @@ graph TD
 - **Two-Party Human Gate**: The founder reviews commercial terms, and the customer must digitally accept before any tenant is provisioned or invoice issued.
 - **Zero-Touch Fulfillment**: The moment the customer signs, RelayOS provisions the isolated tenant at `/t/acme`, generates a legal dual-signed Order Form PDF via ReportLab, and issues the Stripe invoice.
 
+![RelayOS God-Mode Mission Control](https://raw.githubusercontent.com/aiwithrajan/RelayOS/main/docs/images/thumb_scene1_godmode.png)
+*Figure 1: God-Mode Mission Control displaying live deal performance, KPI metrics, active multi-agent workflow stepper, and real-time execution logs.*
+
 ---
 
 ## Why Switch Was Essential
@@ -94,6 +97,9 @@ In enterprise sales, you **cannot** give a code-generation agent access to your 
 Switch solves this with two complementary layers:
 1. **Layer 1 (Switch Per-Agent Tool Binding)**: In [`switch/relayos.template.yaml`](https://github.com/aiwithrajan/RelayOS/blob/main/switch/relayos.template.yaml), Switch binds dedicated FastMCP tool servers per agent. `@architect` is only provided `run_adapter_tests` and `estimate_cost_tool`. Billing tools simply do not exist in its agent prompt or tool registry.
 2. **Layer 2 (RelayOS Gateway Security Gates)**: Even if `@architect` attempts to craft a raw HTTP payload to `/api/v1/agent-tools/create-invoice`, RelayOS inspects the caller role header. The request is instantly denied with an **HTTP 403 Forbidden** security event and logged to the audit trail (verified in Acceptance Test **AT-6**).
+
+![FastMCP Privilege Isolation Security Denial](https://raw.githubusercontent.com/aiwithrajan/RelayOS/main/docs/images/thumb_scene3_isolation.png)
+*Figure 2: Multi-layer isolation in action — @architect is stripped of billing tools in Switch, and direct gateway attempts are blocked with HTTP 403 Forbidden.*
 
 ---
 
@@ -117,6 +123,9 @@ $$\text{Annual Dedicated Infra Cost} = \$1,000 + (\$7 \times \text{Allocated RPM
 * **Rule R3 (Setup Fee)**: $\$2,500$ standard fee; waived if Price $\ge \$20,000$ and Term $\ge 12$ months.
 * **Rule R4 (Payment Terms)**: Net-15 or Net-30 allowed without exception; Net-60 requires founder override.
 * **Rule R5 (White-Label)**: Enterprise tier only (included).
+
+![Enterprise Pricing Playbook Interactive Specs](https://raw.githubusercontent.com/aiwithrajan/RelayOS/main/docs/images/thumb_scene2_playbook.png)
+*Figure 3: Deterministic Pricing Playbook modal displaying company rules R1 to R5 and the mathematical dedicated infrastructure cost model.*
 
 ---
 
@@ -176,6 +185,9 @@ The following trace is captured directly from our continuous live recording (ava
   ✓ Full workflow 100% complete. Total session runtime: 2 minutes 34 seconds (154.3s).
 ```
 
+![Zero-Touch Fulfillment Completed](https://raw.githubusercontent.com/aiwithrajan/RelayOS/main/docs/images/thumb_scene5_fulfilled.png)
+*Figure 4: Instant 5-Step Fulfillment — dedicated tenant provisioned, executed ReportLab Order Form PDF with dual signature blocks, and Stripe electronic invoice.*
+
 ---
 
 ## Why Did the $21,000 Offer Fail?
@@ -187,6 +199,9 @@ This demonstrates the power of deterministic multi-rule playbooks:
 - It **violates Rule R2 (Discount Authority)**:
   $$\text{Discount} = \frac{\$24,000 - \$21,000}{\$24,000} = 12.5\% > 10.0\% \text{ limit}$$
   Under corporate policy, any discount greater than 10.0% (a price below the \$21,600 floor) requires founder sign-off. RelayOS refused to rubber-stamp the price, protecting enterprise gross revenue.
+
+![Customer Enterprise Portal at /t/acme](https://raw.githubusercontent.com/aiwithrajan/RelayOS/main/docs/images/thumb_scene4_customer.png)
+*Figure 5: The Customer Enterprise Portal (/t/acme) displaying live Switch deal room updates, revision negotiation options ($21k vs $23k chips), and legal acceptance.*
 
 ---
 
