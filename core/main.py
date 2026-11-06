@@ -424,6 +424,43 @@ def customer_accept_proposal(slug: str):
     }
 
 
+class CustomerChangeRequest(BaseModel):
+    notes: Optional[str] = "Customer requested terms adjustment"
+    requested_price: Optional[float] = None
+    requested_rpm: Optional[int] = None
+
+
+@app.post("/api/v1/customer/proposal/{slug}/request-changes")
+def customer_request_changes_endpoint(slug: str, req: CustomerChangeRequest):
+    """Log a change request from customer champion and notify Switch room."""
+    deal = get_deal_spec("acme-2026-11")
+    if not deal or deal.customer.slug != slug:
+        raise HTTPException(status_code=404, detail=f"No active proposal for '{slug}'")
+
+    details: Dict[str, Any] = {
+        "notes": req.notes or "Revision requested",
+        "channel": f"Switch deal room #{slug}-fintech-closing",
+    }
+    if req.requested_price is not None:
+        details["requested_price"] = req.requested_price
+    if req.requested_rpm is not None:
+        details["requested_rpm"] = req.requested_rpm
+
+    log_audit(
+        deal_id=deal.deal_id,
+        actor=f"{slug}_champion",
+        action="REQUEST_CHANGES",
+        status="SUBMITTED",
+        details=details,
+    )
+
+    return {
+        "status": "success",
+        "message": f"Change request for {deal.customer.name} dispatched to Switch deal room #{slug}-fintech-closing.",
+        "details": details,
+    }
+
+
 # --- Fulfillment Gated Endpoints & Privilege Isolation (AT-5, AT-6, AT-7, AT-8) ---
 
 class DealActionRequest(BaseModel):

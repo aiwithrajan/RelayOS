@@ -100,3 +100,26 @@ def test_at5_unlocked_only_after_customer_accepts():
         assert inv_resp.status_code == 200
         assert inv_resp.json()["status"] == "success"
         assert inv_resp.json()["state"] == "INVOICED"
+
+
+def test_customer_request_changes_flow():
+    """Verify customer champion can request changes and generate an audit log entry."""
+    with TestClient(app) as client:
+        req_payload = {
+            "notes": "Requesting 800 RPM quota to handle month-end payroll spikes.",
+            "requested_rpm": 800,
+            "requested_price": 21000.0,
+        }
+        res = client.post("/api/v1/customer/proposal/acme/request-changes", json=req_payload)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["status"] == "success"
+        assert "Switch deal room #acme-fintech-closing" in data["message"]
+
+        # Verify audit log
+        logs_res = client.get("/api/v1/admin/audit-logs?deal_id=acme-2026-11")
+        assert logs_res.status_code == 200
+        logs = logs_res.json()
+        change_logs = [l for l in logs if l["actor"] == "acme_champion" and l["action"] == "REQUEST_CHANGES"]
+        assert len(change_logs) > 0
+        assert "payroll spikes" in change_logs[0]["details"]

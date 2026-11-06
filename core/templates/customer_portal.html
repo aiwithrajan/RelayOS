@@ -92,7 +92,7 @@
         </div>
         <div class="flex items-start gap-2.5">
           <span class="text-emerald-400 font-bold">✓</span>
-          <span><strong>Guaranteed 600 RPM</strong>: Dedicated container allocation isolated from multi-tenant noise.</span>
+          <span><strong id="deliverableRpmText">Guaranteed 600 RPM</strong>: Dedicated container allocation isolated from multi-tenant noise.</span>
         </div>
         <div class="flex items-start gap-2.5">
           <span class="text-emerald-400 font-bold">✓</span>
@@ -144,12 +144,129 @@
 
   </main>
 
+  <!-- Request Changes Modal -->
+  <div id="changeRequestModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="portal-card max-w-lg w-full p-6 rounded-2xl shadow-2xl border border-slate-700/80 bg-slate-900/95 flex flex-col gap-4 relative animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-lg font-bold text-white">Request Proposal Adjustments</h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Switch Synced</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Feedback will be posted directly to deal room <span class="text-indigo-400 font-mono">#acme-fintech-closing</span> for Founder & @deal-desk review.
+          </p>
+        </div>
+        <button id="closeModalBtn" class="text-slate-400 hover:text-white text-lg p-1 transition leading-none">✕</button>
+      </div>
+
+      <!-- Quick Preset Chips -->
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Quick Suggestions</label>
+        <div class="flex flex-wrap gap-1.5 text-xs">
+          <button type="button" class="preset-chip px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition" data-note="Requesting 800 RPM quota to handle month-end payroll spikes." data-rpm="800">
+            ⚡ 800 RPM Quota
+          </button>
+          <button type="button" class="preset-chip px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition" data-note="Requesting Net-45 invoice terms to align with treasury payout cycles.">
+            📅 Net-45 Terms
+          </button>
+          <button type="button" class="preset-chip px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition" data-note="Counter offer: $21,000/yr with 750 RPM allocation." data-price="21000" data-rpm="750">
+            💰 Counter $21k / yr
+          </button>
+          <button type="button" class="preset-chip px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition" data-note="Requires 99.95% enterprise uptime SLA with penalty credits.">
+            🛡️ 99.95% SLA
+          </button>
+        </div>
+      </div>
+
+      <!-- Optional Target Values -->
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 mb-1">Target Annual Price ($)</label>
+          <input id="modalPriceInput" type="number" placeholder="e.g. 21000" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 font-mono focus:border-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 mb-1">Target Quota (req/min)</label>
+          <input id="modalRpmInput" type="number" placeholder="e.g. 800" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 font-mono focus:border-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Notes Field -->
+      <div class="text-xs">
+        <label class="block text-[11px] font-medium text-slate-400 mb-1">Revision Notes for Deal Team</label>
+        <textarea id="modalNotesInput" rows="3" placeholder="Describe the adjustment your team needs to proceed with signature..." class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none resize-none"></textarea>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+        <button id="cancelModalBtn" class="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white transition">
+          Cancel
+        </button>
+        <button id="submitChangeRequestBtn" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+          <span>Submit to Switch Deal Room</span>
+          <span>➔</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
   <!-- Footer -->
   <footer class="pt-6 border-t border-slate-800 text-center text-xs text-slate-500">
     Powered by RelayOS Autonomous Control Plane · Secured by Switch & FastMCP
   </footer>
 
   <script>
+    // Toast Notification System
+    function showToast({ title, message, type = 'info' }) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const borders = {
+        success: 'border-emerald-500/40 bg-emerald-950/90 text-emerald-200',
+        warning: 'border-amber-500/40 bg-amber-950/90 text-amber-200',
+        error: 'border-red-500/40 bg-red-950/90 text-red-200',
+        info: 'border-indigo-500/40 bg-slate-900/90 text-slate-200'
+      };
+
+      const icons = {
+        success: '✓',
+        warning: '⚠️',
+        error: '✕',
+        info: 'ℹ️'
+      };
+
+      toast.className = `pointer-events-auto p-4 rounded-xl border ${borders[type] || borders.info} backdrop-blur-md shadow-2xl flex items-start gap-3 transition-all duration-300 transform translate-y-4 opacity-0`;
+      toast.innerHTML = `
+        <div class="text-base font-bold shrink-0">${icons[type] || '•'}</div>
+        <div class="flex-1 text-xs">
+          <div class="font-bold text-white">${title}</div>
+          <div class="mt-0.5 text-slate-300 text-[11px] leading-snug">${message}</div>
+        </div>
+        <button class="text-slate-400 hover:text-white text-xs ml-2 shrink-0">✕</button>
+      `;
+
+      container.appendChild(toast);
+
+      // Trigger animation
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      });
+
+      const removeToast = () => {
+        toast.classList.add('opacity-0', 'translate-x-4');
+        setTimeout(() => toast.remove(), 300);
+      };
+
+      toast.querySelector('button').addEventListener('click', removeToast);
+      setTimeout(removeToast, 4500);
+    }
+
     async function loadProposal() {
       try {
         const res = await fetch('/api/v1/customer/proposal/acme');
@@ -159,6 +276,11 @@
         document.getElementById('proposalPriceDisplay').innerHTML = `$${data.commercial.price_usd_year.toLocaleString()} <span class="text-sm font-normal text-slate-400">/ year</span>`;
         document.getElementById('proposalRpmDisplay').innerText = `${data.engineering.rate_limit_rpm.toLocaleString()} req / min`;
         document.getElementById('proposalTermsDisplay').innerText = data.commercial.payment_terms;
+
+        const deliverableEl = document.getElementById('deliverableRpmText');
+        if (deliverableEl) {
+          deliverableEl.innerText = `Guaranteed ${data.engineering.rate_limit_rpm.toLocaleString()} RPM`;
+        }
 
         const badge = document.getElementById('proposalStatusBadge');
         if (data.state === 'CUSTOMER_ACCEPTED' || data.state === 'PROVISIONED' || data.state === 'INVOICED') {
@@ -180,18 +302,110 @@
       }
     }
 
-    document.getElementById('acceptBtn').addEventListener('click', async () => {
-      const res = await fetch('/api/v1/customer/proposal/acme/accept', { method: 'POST' });
-      if (res.ok) {
-        loadProposal();
-      } else {
-        const err = await res.json();
-        alert('Acceptance failed: ' + (err.detail || 'Founder must approve proposal first'));
+    // Modal Controls
+    const modal = document.getElementById('changeRequestModal');
+    const openModal = () => {
+      modal.classList.remove('hidden');
+      document.getElementById('modalNotesInput').focus();
+    };
+    const closeModal = () => {
+      modal.classList.add('hidden');
+    };
+
+    document.getElementById('rejectBtn').addEventListener('click', openModal);
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Preset chip listeners
+    document.querySelectorAll('.preset-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const note = chip.getAttribute('data-note');
+        const price = chip.getAttribute('data-price');
+        const rpm = chip.getAttribute('data-rpm');
+        if (note) document.getElementById('modalNotesInput').value = note;
+        if (price) document.getElementById('modalPriceInput').value = price;
+        if (rpm) document.getElementById('modalRpmInput').value = rpm;
+      });
+    });
+
+    // Submit Change Request
+    document.getElementById('submitChangeRequestBtn').addEventListener('click', async () => {
+      const notes = document.getElementById('modalNotesInput').value.trim() || 'Customer requested terms revision';
+      const priceVal = parseFloat(document.getElementById('modalPriceInput').value);
+      const rpmVal = parseInt(document.getElementById('modalRpmInput').value, 10);
+
+      const payload = {
+        notes,
+        requested_price: isNaN(priceVal) ? null : priceVal,
+        requested_rpm: isNaN(rpmVal) ? null : rpmVal
+      };
+
+      try {
+        const btn = document.getElementById('submitChangeRequestBtn');
+        btn.disabled = true;
+        btn.innerText = 'Submitting...';
+
+        const res = await fetch('/api/v1/customer/proposal/acme/request-changes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        btn.disabled = false;
+        btn.innerHTML = '<span>Submit to Switch Deal Room</span><span>➔</span>';
+
+        if (res.ok) {
+          closeModal();
+          showToast({
+            type: 'success',
+            title: 'Change Request Dispatched',
+            message: 'Your revision request was sent to Switch deal room #acme-fintech-closing. The Founder & @deal-desk have been notified.'
+          });
+        } else {
+          showToast({
+            type: 'error',
+            title: 'Submission Failed',
+            message: 'Unable to submit revision request. Please try again.'
+          });
+        }
+      } catch (err) {
+        showToast({
+          type: 'error',
+          title: 'Network Error',
+          message: 'Failed to communicate with RelayOS control plane.'
+        });
       }
     });
 
-    document.getElementById('rejectBtn').addEventListener('click', async () => {
-      alert('Revision request logged. Your RelayOS team will be notified in Switch.');
+    // Proposal Acceptance
+    document.getElementById('acceptBtn').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/v1/customer/proposal/acme/accept', { method: 'POST' });
+        if (res.ok) {
+          showToast({
+            type: 'success',
+            title: 'Agreement Signed',
+            message: 'Commercial agreement confirmed. Tenant provisioning is now unlocked!'
+          });
+          loadProposal();
+        } else {
+          const err = await res.json();
+          showToast({
+            type: 'warning',
+            title: 'Founder Approval Required',
+            message: err.detail || 'Founder must approve commercial terms before customer signature can be accepted.'
+          });
+        }
+      } catch (e) {
+        showToast({
+          type: 'error',
+          title: 'Acceptance Error',
+          message: 'Unable to submit signature at this time.'
+        });
+      }
     });
 
     loadProposal();
