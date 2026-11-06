@@ -4,6 +4,7 @@
 
 [![Tests](https://img.shields.io/badge/Acceptance%20Tests-8%2F8%20Passing-emerald)](https://github.com/aiwithrajan/RelayOS)
 [![Demo Video](https://img.shields.io/badge/YouTube-Watch%20Demo-red)](https://youtu.be/3_CJ1isXbBA?si=sbp3CISsMhlnP0R5)
+[![Blog Post](https://img.shields.io/badge/Dev.to-Read%20Blog%20Post-black)](https://dev.to/rajan_mishra_a9f78ad216b4/closing-23000-enterprise-deals-at-the-speed-of-chat-building-relayos-for-switch-2m5p)
 [![Live Demo](https://img.shields.io/badge/Vercel-Live%20Demo-blue)](https://relayos-seven.vercel.app/god-mode)
 [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
 [![GitHub](https://img.shields.io/badge/GitHub-aiwithrajan%2FRelayOS-black)](https://github.com/aiwithrajan/RelayOS)
