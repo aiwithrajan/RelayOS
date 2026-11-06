@@ -5,439 +5,816 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RelayOS — God-Mode Mission Control</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            bgDark: '#0B0D13',
-            cardDark: '#121622',
-            borderDark: '#1E2638',
-            accentPrimary: '#6366F1',
-            accentSuccess: '#10B981',
-            accentDanger: '#EF4444',
-            accentWarning: '#F59E0B'
+            appDark: '#090D16',
+            sidebarDark: '#0D121F',
+            cardDark: '#121827',
+            cardHover: '#161F33',
+            borderDark: '#1E293B',
+            borderGlow: 'rgba(56, 189, 248, 0.25)',
+            accentCyan: '#00D2FF',
+            accentBlue: '#3B82F6',
+            accentPurple: '#8B5CF6',
+            accentEmerald: '#10B981',
+            accentAmber: '#F59E0B',
+            accentRose: '#F43F5E'
           },
           fontFamily: {
-            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
-            sans: ['Inter', 'system-ui', 'sans-serif']
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
           }
         }
       }
     }
   </script>
   <style>
-    body { background-color: #0B0D13; color: #E2E8F0; }
-    .glass-card { background: rgba(18, 22, 34, 0.85); backdrop-filter: blur(12px); border: 1px solid #1E2638; }
+    body { background-color: #090D16; color: #F1F5F9; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass-panel { background: rgba(18, 24, 39, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(30, 41, 59, 0.8); }
+    .glass-card { background: rgba(18, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(30, 41, 59, 0.7); }
+    .glow-cyan { filter: drop-shadow(0 0 12px rgba(0, 210, 255, 0.4)); }
+    .glow-purple { filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.35)); }
+    .glow-box-cyan { box-shadow: 0 0 20px -3px rgba(0, 210, 255, 0.25); }
+    .glow-box-purple { box-shadow: 0 0 25px -4px rgba(139, 92, 246, 0.3); }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
   </style>
 </head>
-<body class="min-h-screen font-sans antialiased p-4 lg:p-6 flex flex-col gap-6">
+<body class="min-h-screen antialiased flex overflow-x-hidden">
 
-  <!-- Top Nav Bar -->
-  <header class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl glass-card">
-    <div class="flex items-center gap-3">
-      <div class="h-9 w-9 rounded-lg bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center font-bold text-indigo-400 font-mono text-lg">
-        ⚡
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-lg font-bold tracking-tight text-white">RelayOS <span class="text-xs uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">God-Mode</span></h1>
-          <span class="text-xs text-slate-400">Track 01: Best Business Workflow</span>
+  <!-- ========================================================================= -->
+  <!-- LEFT SIDEBAR                                                              -->
+  <!-- ========================================================================= -->
+  <aside class="w-64 bg-sidebarDark border-r border-borderDark flex flex-col justify-between shrink-0 p-5 min-h-screen sticky top-0">
+    <div class="flex flex-col gap-6">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 px-1 pt-1">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/25 glow-cyan">
+          <!-- Infinity SVG Logo -->
+          <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.581 0-4.581 8 0 8 5.606 0 7.644-8 12.74-8z"/>
+          </svg>
         </div>
-        <p class="text-xs text-slate-400 font-mono">Control Plane for Autonomous Deal Closing</p>
+        <div>
+          <div class="text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5">
+            RelayOS
+          </div>
+          <p class="text-[11px] text-slate-400 font-medium">AI Deal Orchestration</p>
+        </div>
       </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex flex-col gap-1.5 pt-2">
+        <a href="/god-mode" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="#active-deal" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>Deals</span>
+          <span class="ml-auto text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300">1 Live</span>
+        </a>
+
+        <a href="#agents" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <span>Agents</span>
+        </a>
+
+        <a href="#playbook" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <span>Playbook</span>
+        </a>
+
+        <a href="/t/acme" target="_blank" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+          <span>Tenants</span>
+          <span class="ml-auto text-[10px] text-emerald-400 font-mono">/t/acme ➔</span>
+        </a>
+
+        <a href="#terminal" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+          <span>Audit Logs</span>
+        </a>
+
+        <a href="/docs" target="_blank" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span>API Docs</span>
+        </a>
+      </nav>
+
     </div>
 
-    <div class="flex items-center gap-3 font-mono text-xs">
-      <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center gap-2">
-        <span class="text-slate-400">DEAL:</span>
-        <span id="dealIdText" class="text-white font-semibold">acme-2026-11</span>
-      </div>
-      <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center gap-2">
-        <span class="text-slate-400">VER:</span>
-        <span id="dealVersionBadge" class="text-indigo-400 font-bold">v1</span>
-      </div>
-      <div id="stateBadge" class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
-        PRICE_CHECKED
-      </div>
-      <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center gap-2">
-        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span id="sessionTimer" class="text-emerald-400 font-semibold">01:45</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Grid Layout -->
-  <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
-    
-    <!-- Left Column: Financials & Playbook (7 Cols) -->
-    <div class="lg:col-span-7 flex flex-col gap-6">
-
-      <!-- Margin Progress Gauge Card -->
-      <div class="glass-card p-5 rounded-xl flex flex-col gap-4">
+    <!-- Bottom Section: Hackathon Badge & Profile -->
+    <div class="flex flex-col gap-4 pt-4 border-t border-borderDark/80">
+      
+      <!-- Flip the Switch Hackathon Badge Card -->
+      <div class="p-3.5 rounded-xl bg-gradient-to-br from-indigo-950/60 via-slate-900 to-slate-950 border border-indigo-500/30 flex flex-col gap-2">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-white">Gross Margin Health</span>
-            <span class="text-xs text-slate-400 font-mono">(Floor Target: 75.0%)</span>
+          <div class="flex items-center gap-1.5 text-xs font-bold text-white">
+            <span class="text-amber-400">⚡</span>
+            <span>Flip the Switch</span>
           </div>
-          <div id="marginPercentageDisplay" class="text-2xl font-black font-mono text-red-400">
-            60.0%
-          </div>
+          <span class="text-xs">🏆</span>
         </div>
-
-        <!-- Custom Progress Bar with 75% Marker -->
-        <div class="relative w-full bg-slate-800/80 h-5 rounded-full overflow-hidden p-0.5 border border-slate-700">
-          <div id="marginBarFill" class="h-full rounded-full transition-all duration-500 bg-red-500" style="width: 60%;"></div>
-          <div class="absolute top-0 bottom-0 left-[75%] w-0.5 bg-yellow-400 shadow-[0_0_8px_#F59E0B] z-10" title="75% Floor Target"></div>
-        </div>
-        <div class="flex justify-between text-[11px] font-mono text-slate-400">
-          <span>0%</span>
-          <span class="text-yellow-400">75% Margin Floor (Rule R1)</span>
-          <span>100%</span>
-        </div>
-
-        <!-- Financial Metrics Grid -->
-        <div class="grid grid-cols-3 gap-3 pt-2">
-          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-            <div class="text-[11px] text-slate-400 font-mono">ANNUAL PRICE</div>
-            <div id="priceDisplay" class="text-base font-bold text-white font-mono">$20,000 / yr</div>
-            <div id="priceDiscountSubtext" class="text-[10px] text-slate-500 font-mono">List: $24,000 (-16.7%)</div>
-          </div>
-          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-            <div class="text-[11px] text-slate-400 font-mono">INFRASTRUCTURE COST</div>
-            <div id="infraCostDisplay" class="text-base font-bold text-white font-mono">$8,000 / yr</div>
-            <div id="rpmDisplay" class="text-[10px] text-slate-500 font-mono">1,000 req/min</div>
-          </div>
-          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-            <div class="text-[11px] text-slate-400 font-mono">PLAYBOOK VERDICT</div>
-            <div id="playbookVerdictBadge" class="text-sm font-bold text-red-400 font-mono">FAIL (R1, R2)</div>
-            <div id="actionRequiredSubtext" class="text-[10px] text-red-500/80 font-mono">Action Required</div>
-          </div>
-        </div>
+        <div class="text-[11px] text-indigo-300 font-medium">Track 01 • $2,000 Prize</div>
+        <p class="text-[10px] text-slate-400 italic leading-snug">"From request to revenue — in one Switch session."</p>
       </div>
 
-      <!-- Side-by-Side Version Diff Viewer (v1 vs v2) -->
-      <div id="diffCard" class="glass-card p-5 rounded-xl flex flex-col gap-3">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
-            <span>DealSpec Version Comparison</span>
-            <span class="text-xs text-indigo-400 font-mono">v1 (Acme Ask) ➔ v2 (Founder Counter)</span>
-          </h2>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Diff Engine</span>
-        </div>
-        <div class="grid grid-cols-2 gap-3 text-xs font-mono">
-          <div class="p-3 rounded-lg bg-slate-950/60 border border-red-500/30">
-            <div class="text-red-400 font-bold mb-1 flex items-center justify-between">
-              <span>v1: Acme Initial Ask</span>
-              <span class="text-[10px] bg-red-500/20 px-1.5 py-0.2 rounded text-red-300">FAIL</span>
-            </div>
-            <div class="text-slate-300 space-y-0.5 text-[11px]">
-              <div>Price: <span class="text-white">$20,000/yr</span></div>
-              <div>Rate Limit: <span class="text-white">1,000 RPM</span></div>
-              <div>Infra Cost: <span class="text-white">$8,000/yr</span></div>
-              <div>Gross Margin: <span class="text-red-400 font-bold">60.0%</span></div>
-              <div>Payment Terms: <span class="text-white">Net-30</span></div>
-              <div>Setup Fee: <span class="text-white">$2,500</span></div>
-            </div>
+      <!-- User Profile Pill -->
+      <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-xs text-white shadow">
+            R
           </div>
-
-          <div class="p-3 rounded-lg bg-slate-950/60 border border-emerald-500/30">
-            <div class="text-emerald-400 font-bold mb-1 flex items-center justify-between">
-              <span>v2: Founder Counter</span>
-              <span id="v2BadgeStatus" class="text-[10px] bg-emerald-500/20 px-1.5 py-0.2 rounded text-emerald-300">PASS</span>
+          <div>
+            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+              <span>Rajan Mishra</span>
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             </div>
-            <div class="text-slate-300 space-y-0.5 text-[11px]">
-              <div>Price: <span class="text-emerald-300 font-bold">$22,000/yr</span> (+10%)</div>
-              <div>Rate Limit: <span class="text-yellow-300 font-bold">600 RPM</span> (-40%)</div>
-              <div>Infra Cost: <span class="text-emerald-300 font-bold">$5,200/yr</span></div>
-              <div>Gross Margin: <span class="text-emerald-400 font-bold">76.4%</span> (≥ 75%)</div>
-              <div>Payment Terms: <span class="text-emerald-300 font-bold">Net-15</span></div>
-              <div>Setup Fee: <span class="text-emerald-300 font-bold">WAIVED</span></div>
-            </div>
+            <div class="text-[10px] text-slate-400 font-mono">Founder</div>
           </div>
         </div>
-      </div>
-
-      <!-- Playbook Rules Verification (R1-R5) -->
-      <div class="glass-card p-5 rounded-xl flex flex-col gap-3">
-        <h2 class="text-sm font-semibold text-white flex items-center justify-between">
-          <span>Enterprise Pricing Playbook Evaluation (Rules R1 – R5)</span>
-          <span class="text-xs text-indigo-400 font-mono">Enterprise_Pricing_Playbook.md</span>
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="rulesGrid">
-          <div id="ruleR1Card" class="p-3 rounded-lg bg-red-950/20 border border-red-500/30 flex items-start justify-between">
-            <div>
-              <div id="ruleR1Title" class="text-xs font-bold text-red-400 font-mono">R1: Margin Floor (≥ 75%)</div>
-              <div id="ruleR1Subtext" class="text-[11px] text-slate-300 mt-0.5">Calculated: 60.0% (Under 75% minimum)</div>
-            </div>
-            <span id="ruleR1Badge" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-red-500/20 text-red-300 border border-red-500/40">FAIL</span>
-          </div>
-
-          <div id="ruleR2Card" class="p-3 rounded-lg bg-red-950/20 border border-red-500/30 flex items-start justify-between">
-            <div>
-              <div id="ruleR2Title" class="text-xs font-bold text-red-400 font-mono">R2: Discount Authority (≤ 10%)</div>
-              <div id="ruleR2Subtext" class="text-[11px] text-slate-300 mt-0.5">Discount: 16.7% ($20k < $21,600 floor)</div>
-            </div>
-            <span id="ruleR2Badge" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-red-500/20 text-red-300 border border-red-500/40">FAIL</span>
-          </div>
-
-          <div id="ruleR3Card" class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between">
-            <div>
-              <div class="text-xs font-bold text-emerald-400 font-mono">R3: Setup Fee Waiver</div>
-              <div class="text-[11px] text-slate-300 mt-0.5">Standard $2,500 waived if price ≥ $20k and term ≥ 12 mo</div>
-            </div>
-            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">PASS</span>
-          </div>
-
-          <div id="ruleR4Card" class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between">
-            <div>
-              <div class="text-xs font-bold text-emerald-400 font-mono">R4: Payment Terms</div>
-              <div class="text-[11px] text-slate-300 mt-0.5">Terms: Net-30 standard / Net-15 allowed</div>
-            </div>
-            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">PASS</span>
-          </div>
-
-          <div id="ruleR5Card" class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between md:col-span-2">
-            <div>
-              <div class="text-xs font-bold text-emerald-400 font-mono">R5: White-Label Customization</div>
-              <div class="text-[11px] text-slate-300 mt-0.5">Allowed on Enterprise tier deployments</div>
-            </div>
-            <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">PASS</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fulfillment Artifacts (Cards for Live Tenant, Order Form PDF, Mock Stripe Invoice) -->
-      <div class="glass-card p-5 rounded-xl flex flex-col gap-3">
-        <h2 class="text-sm font-semibold text-white flex items-center justify-between">
-          <span>Zero-Touch Fulfillment Artifacts</span>
-          <span class="text-xs text-emerald-400 font-mono">Gated by CUSTOMER_ACCEPTED</span>
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <!-- Tenant Card -->
-          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] font-mono text-slate-400 uppercase">Live Tenant</div>
-              <div class="text-sm font-bold text-white mt-1">/t/acme</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">Quota: 600 RPM</div>
-            </div>
-            <a href="/t/acme" target="_blank" class="mt-3 text-center py-1.5 px-3 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-xs font-mono border border-indigo-500/30">
-              Open Tenant ➔
-            </a>
-          </div>
-
-          <!-- Order Form PDF Card -->
-          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] font-mono text-slate-400 uppercase">Legal Order Form</div>
-              <div class="text-sm font-bold text-white mt-1">ReportLab PDF</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">$22k · Net-15 · Waived</div>
-            </div>
-            <a id="pdfDownloadLink" href="/api/v1/documents/order-form-acme-2026-11-v2.pdf" target="_blank" class="mt-3 text-center py-1.5 px-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-slate-700">
-              Download PDF 📄
-            </a>
-          </div>
-
-          <!-- Stripe Invoice Card -->
-          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] font-mono text-slate-400 uppercase">Stripe Invoice</div>
-              <div class="text-sm font-bold text-emerald-400 mt-1">$22,000.00</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">Status: ISSUED (Mock)</div>
-            </div>
-            <a id="stripeInvoiceLink" href="https://pay.stripe.com/invoice/mock_acme" target="_blank" class="mt-3 text-center py-1.5 px-3 rounded bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs font-mono border border-emerald-500/30">
-              Pay Invoice 💳
-            </a>
-          </div>
-        </div>
+        <span class="text-slate-500 text-xs">⌄</span>
       </div>
 
     </div>
+  </aside>
 
-    <!-- Right Column: DealSpec JSON, Audit Log, Controls (5 Cols) -->
-    <div class="lg:col-span-5 flex flex-col gap-6">
+  <!-- ========================================================================= -->
+  <!-- MAIN DASHBOARD CONTENT AREA                                               -->
+  <!-- ========================================================================= -->
+  <div class="flex-1 min-h-screen flex flex-col overflow-y-auto">
 
-      <!-- Action Panel -->
-      <div class="glass-card p-5 rounded-xl flex flex-col gap-3">
-        <h2 class="text-sm font-semibold text-white flex items-center justify-between">
-          <span>Deal Governance & Controls</span>
-          <span id="approvalIndicator" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">Pending</span>
-        </h2>
+    <!-- Top Navigation Bar -->
+    <header class="h-16 px-6 lg:px-8 bg-sidebarDark/80 backdrop-blur-md border-b border-borderDark flex items-center justify-between sticky top-0 z-40">
+      <!-- Search Input -->
+      <div class="relative w-80">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </span>
+        <input type="text" placeholder="Search deals, agents, or commands..." class="w-full pl-9 pr-12 py-1.5 rounded-lg bg-cardDark/80 border border-borderDark text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition font-sans">
+        <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+          <kbd class="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-slate-800 text-slate-400 border border-slate-700">⌘ K</kbd>
+        </span>
+      </div>
+
+      <!-- Header Right Controls -->
+      <div class="flex items-center gap-4">
+        <!-- System Status Pill -->
+        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
+          <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>System Online</span>
+        </div>
+
+        <!-- Mode Toggle / Theme Icon -->
+        <button class="h-8 w-8 rounded-lg bg-cardDark border border-borderDark flex items-center justify-center text-slate-400 hover:text-white transition" title="Active Theme">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </button>
+
+        <!-- Notification Bell with Badge -->
+        <div class="relative">
+          <button class="h-8 w-8 rounded-lg bg-cardDark border border-borderDark flex items-center justify-center text-slate-400 hover:text-white transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+          </button>
+          <span class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-rose-500 text-white font-bold text-[9px] flex items-center justify-center shadow">
+            3
+          </span>
+        </div>
+
+        <!-- User Avatar -->
+        <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xs text-white shadow ring-2 ring-indigo-500/30">
+          R
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Scrollable Dashboard Content -->
+    <main class="flex-1 p-6 lg:p-8 flex flex-col gap-6 max-w-7xl w-full mx-auto">
+      
+      <!-- ========================================================================= -->
+      <!-- HERO WELCOME BANNER                                                       -->
+      <!-- ========================================================================= -->
+      <div class="relative overflow-hidden rounded-2xl glass-panel p-6 lg:p-8 border border-slate-800 bg-gradient-to-r from-cardDark via-slate-900 to-indigo-950/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 glow-box-purple">
+        <!-- Abstract Glow Background -->
+        <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 right-48 w-80 h-80 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none"></div>
+
+        <div class="z-10">
+          <h1 class="text-2xl lg:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+            <span>Welcome Back, Rajan!</span>
+          </h1>
+          <p class="text-xs lg:text-sm text-slate-400 mt-1.5 max-w-lg">
+            Close more deals with AI agents, faster than ever. Switch orchestration active on room <span class="text-indigo-400 font-mono font-medium">#acme-fintech-closing</span>.
+          </p>
+        </div>
+
+        <!-- Right Side: 3D-Styled Glowing Infinity Graphic & CTA -->
+        <div class="z-10 flex items-center gap-4">
+          <div class="hidden sm:flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 shadow-inner">
+            <div class="h-9 w-9 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white glow-cyan">
+              <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.581 0-4.581 8 0 8 5.606 0 7.644-8 12.74-8z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Active Session</div>
+              <div id="sessionTimer" class="text-sm font-bold font-mono text-emerald-400">02:18</div>
+            </div>
+          </div>
+
+          <button id="resetDemoBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center gap-2 cursor-pointer">
+            <span>↺ Reset Demo</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ========================================================================= -->
+      <!-- 4 TOP STAT CARDS (ROW 1)                                                  -->
+      <!-- ========================================================================= -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <div class="flex flex-col gap-2.5">
-          <!-- Counter Offer Action -->
-          <button id="counterOfferBtn" class="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs font-mono transition flex items-center justify-center gap-2">
-            <span>⚡ Apply Founder Counter ($22k / 600 RPM / Net-15)</span>
-          </button>
-
-          <!-- Founder Approval Action -->
-          <button id="founderApproveBtn" class="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs font-mono transition flex items-center justify-center gap-2">
-            <span>✓ Founder Sign-Off (Approve Proposal)</span>
-          </button>
-
-          <!-- Customer Sign-Off Trigger -->
-          <button id="customerAcceptBtn" class="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs font-mono transition flex items-center justify-center gap-2">
-            <span>✍ Customer Sign-Off (Acme Champion Accepts)</span>
-          </button>
-
-          <!-- Fulfillment Action -->
-          <button id="fulfillBtn" class="w-full py-2 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs font-mono transition flex items-center justify-center gap-2">
-            <span>🚀 Run Zero-Touch Fulfillment (@deal-desk)</span>
-          </button>
-
-          <!-- Security Isolation Trigger (AT-6) -->
-          <button id="testIsolationBtn" class="w-full py-2 px-3 rounded-lg bg-red-950/40 hover:bg-red-950/70 border border-red-500/40 text-red-300 font-medium text-xs font-mono transition flex items-center justify-center gap-2">
-            <span>🛡️ Test Security Isolation (AT-6: @architect Billing Attempt)</span>
-          </button>
-
-          <!-- Reset Demo State -->
-          <button id="resetDemoBtn" class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600/60 text-slate-300 font-medium text-xs font-mono transition flex items-center justify-center gap-2">
-            <span>↺ Reset Demo to Initial Ask (v1)</span>
-          </button>
+        <!-- Stat Card 1: Total Deals -->
+        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:border-slate-700 transition">
+          <div class="flex flex-col gap-1">
+            <div class="h-9 w-9 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mb-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+            </div>
+            <span class="text-xs text-slate-400 font-medium">Total Deals</span>
+            <div class="text-2xl font-extrabold text-white">12</div>
+            <span class="text-[11px] text-emerald-400 font-medium flex items-center gap-0.5">
+              <span>↑ +20%</span>
+            </span>
+          </div>
+          <!-- Mini SVG Sparkline (Green) -->
+          <svg class="w-24 h-12 text-emerald-400 overflow-visible" viewBox="0 0 100 40">
+            <path d="M0 35 Q 25 30, 45 15 T 80 10 T 100 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
         </div>
+
+        <!-- Stat Card 2: Success Rate -->
+        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:border-slate-700 transition">
+          <div class="flex flex-col gap-1">
+            <div class="h-9 w-9 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center justify-center mb-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <span class="text-xs text-slate-400 font-medium">Success Rate</span>
+            <div class="text-2xl font-extrabold text-white">92%</div>
+            <span class="text-[11px] text-cyan-400 font-medium flex items-center gap-0.5">
+              <span>↑ +5%</span>
+            </span>
+          </div>
+          <!-- Mini SVG Sparkline (Cyan) -->
+          <svg class="w-24 h-12 text-cyan-400 overflow-visible" viewBox="0 0 100 40">
+            <path d="M0 30 Q 30 25, 50 18 T 75 12 T 100 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <!-- Stat Card 3: Revenue Closed -->
+        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:border-slate-700 transition">
+          <div class="flex flex-col gap-1">
+            <div class="h-9 w-9 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center mb-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <span class="text-xs text-slate-400 font-medium">Revenue Closed</span>
+            <div class="text-2xl font-extrabold text-white">$240K</div>
+            <span class="text-[11px] text-purple-400 font-medium flex items-center gap-0.5">
+              <span>↑ +32%</span>
+            </span>
+          </div>
+          <!-- Mini SVG Sparkline (Purple) -->
+          <svg class="w-24 h-12 text-purple-400 overflow-visible" viewBox="0 0 100 40">
+            <path d="M0 38 Q 20 28, 45 22 T 80 14 T 100 4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <!-- Stat Card 4: Avg. Deal Time -->
+        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:border-slate-700 transition">
+          <div class="flex flex-col gap-1">
+            <div class="h-9 w-9 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center mb-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <span class="text-xs text-slate-400 font-medium">Avg. Deal Time</span>
+            <div class="text-2xl font-extrabold text-white">2.8 min</div>
+            <span class="text-[11px] text-amber-400 font-medium flex items-center gap-0.5">
+              <span>↓ -40%</span>
+            </span>
+          </div>
+          <!-- Mini SVG Sparkline (Orange) -->
+          <svg class="w-24 h-12 text-amber-400 overflow-visible" viewBox="0 0 100 40">
+            <path d="M0 10 Q 30 18, 55 25 T 80 32 T 100 38" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+
       </div>
 
-      <!-- Real-Time Audit Log Feed -->
-      <div class="glass-card p-5 rounded-xl flex flex-col gap-3 flex-1">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
-            <span>Tamper-Evident Audit Log</span>
-          </h2>
-          <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Live Append-Only</span>
+      <!-- ========================================================================= -->
+      <!-- MAIN GRID: LEFT (CHART + RECENT ACTIVITY) vs RIGHT (WORKFLOW + CONSOLE)    -->
+      <!-- ========================================================================= -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- ===================================================================== -->
+        <!-- LEFT COLUMN (6 COLS)                                                  -->
+        <!-- ===================================================================== -->
+        <div class="lg:col-span-6 flex flex-col gap-6">
+
+          <!-- Deal Performance Chart Card -->
+          <div class="glass-card p-6 rounded-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-white flex items-center gap-2">
+                  <span class="text-cyan-400">📊</span>
+                  <span>Deal Performance</span>
+                </span>
+              </div>
+              <!-- Range Selector Pills -->
+              <div class="flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-mono">
+                <button class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold">7D</button>
+                <button class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">30D</button>
+                <button class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">90D</button>
+              </div>
+            </div>
+
+            <!-- Chart.js Container -->
+            <div class="h-56 w-full relative">
+              <canvas id="performanceChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Recent Activity Feed -->
+          <div class="glass-card p-6 rounded-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-white flex items-center gap-2">
+                  <span class="text-purple-400">⏱️</span>
+                  <span>Recent Activity</span>
+                </span>
+              </div>
+              <a href="#terminal" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition">View All ➔</a>
+            </div>
+
+            <!-- Activity Items List -->
+            <div id="recentActivityList" class="flex flex-col gap-3 font-sans text-xs">
+              <!-- Item 1 -->
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/40 border border-slate-800/80">
+                <div class="flex items-center gap-3">
+                  <div class="h-7 w-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">✓</div>
+                  <div>
+                    <span class="text-white font-semibold">@deal-desk</span>
+                    <span class="text-slate-300 ml-1">evaluated deal margin (76.4%)</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-slate-500 font-mono">2m ago</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300">Success</span>
+                </div>
+              </div>
+
+              <!-- Item 2 -->
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/40 border border-slate-800/80">
+                <div class="flex items-center gap-3">
+                  <div class="h-7 w-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs">&lt;/&gt;</div>
+                  <div>
+                    <span class="text-white font-semibold">@architect</span>
+                    <span class="text-slate-300 ml-1">completed ERP adapter build</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-slate-500 font-mono">5m ago</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300">Info</span>
+                </div>
+              </div>
+
+              <!-- Item 3 -->
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/40 border border-slate-800/80">
+                <div class="flex items-center gap-3">
+                  <div class="h-7 w-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs">✍</div>
+                  <div>
+                    <span class="text-white font-semibold">Customer</span>
+                    <span class="text-slate-300 ml-1">reviewed proposal at /t/acme</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-slate-500 font-mono">8m ago</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300">Update</span>
+                </div>
+              </div>
+
+              <!-- Item 4 -->
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/40 border border-slate-800/80">
+                <div class="flex items-center gap-3">
+                  <div class="h-7 w-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">🚀</div>
+                  <div>
+                    <span class="text-white font-semibold">Tenant</span>
+                    <span class="text-slate-300 ml-1">configured with 600 RPM</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-slate-500 font-mono">10m ago</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300">Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
-        <div id="auditLogContainer" class="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1 font-mono text-xs">
-          <!-- Populated by JavaScript -->
+
+        <!-- ===================================================================== -->
+        <!-- RIGHT COLUMN (6 COLS)                                                 -->
+        <!-- ===================================================================== -->
+        <div class="lg:col-span-6 flex flex-col gap-6">
+
+          <!-- Active Deal Workflow Card -->
+          <div id="active-deal" class="glass-card p-6 rounded-2xl flex flex-col gap-5 border border-indigo-500/30 glow-box-cyan">
+            
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="text-amber-400 text-base">⚡</span>
+                <h2 class="text-sm font-bold text-white">Active Deal Workflow</h2>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="dealIdText" class="text-[11px] font-mono text-slate-400">acme-2026-11</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Live</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Horizontal 6-Step Workflow Stepper -->
+            <div class="grid grid-cols-6 gap-1 pt-1 text-center font-mono">
+              <!-- Step 1 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="stepEngineered" class="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-xs font-bold shadow-md">✓</div>
+                <span class="text-[9px] text-slate-400 font-medium">Engineered</span>
+              </div>
+              <!-- Step 2 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="stepPriceChecked" class="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-xs font-bold shadow-md">✓</div>
+                <span class="text-[9px] text-slate-400 font-medium">Price Checked</span>
+              </div>
+              <!-- Step 3 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="stepFounderApproval" class="w-7 h-7 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/60 flex items-center justify-center text-xs font-bold ring-4 ring-blue-500/20 animate-pulse">👤</div>
+                <span class="text-[9px] text-slate-300 font-bold">Founder Sign</span>
+              </div>
+              <!-- Step 4 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="stepCustomerAcceptance" class="w-7 h-7 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs">✍</div>
+                <span class="text-[9px] text-slate-500">Customer Sign</span>
+              </div>
+              <!-- Step 5 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="stepProvisioning" class="w-7 h-7 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs">⚙</div>
+                <span class="text-[9px] text-slate-500">Provision</span>
+              </div>
+              <!-- Step 6 -->
+              <div class="flex flex-col items-center gap-1.5">
+                <div id="stepInvoiced" class="w-7 h-7 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs">📄</div>
+                <span class="text-[9px] text-slate-500">Invoiced</span>
+              </div>
+            </div>
+
+            <!-- Acme FinTech Deal Card -->
+            <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white text-sm shadow">
+                    AC
+                  </div>
+                  <div>
+                    <div class="text-sm font-bold text-white flex items-center gap-2">
+                      <span>Acme FinTech</span>
+                      <span id="dealVersionBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">v2</span>
+                    </div>
+                    <div class="text-xs text-slate-400 font-mono">Enterprise • <span id="priceDisplay" class="text-emerald-400 font-bold">$22,000 / year</span></div>
+                  </div>
+                </div>
+
+                <div class="text-right">
+                  <div id="dealProgressText" class="text-xs font-mono font-bold text-cyan-400">75% Complete</div>
+                  <div class="w-24 bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+                    <div id="dealProgressBar" class="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-500" style="width: 75%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3 Specs Badges -->
+              <div class="grid grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+                <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                  <div class="text-slate-500 text-[10px]">RATE LIMIT</div>
+                  <div id="rpmDisplay" class="text-white font-bold mt-0.5">600 RPM</div>
+                </div>
+                <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                  <div class="text-slate-500 text-[10px]">GROSS MARGIN</div>
+                  <div id="marginPercentageDisplay" class="text-emerald-400 font-bold mt-0.5">76.4% (Pass)</div>
+                </div>
+                <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                  <div class="text-slate-500 text-[10px]">PAYMENT TERMS</div>
+                  <div id="termsDisplay" class="text-white font-bold mt-0.5">Net-15</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Deal Action Controls -->
+            <div class="flex flex-col gap-2 pt-1">
+              <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                <!-- Apply Counter -->
+                <button id="counterOfferBtn" class="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-md shadow-indigo-600/20 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>⚡ Apply Counter ($22k)</span>
+                </button>
+                <!-- Founder Sign-Off -->
+                <button id="founderApproveBtn" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>✓ Founder Sign-Off</span>
+                </button>
+                <!-- Customer Sign-Off -->
+                <button id="customerAcceptBtn" class="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md shadow-blue-600/20 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>✍ Customer Sign-Off</span>
+                </button>
+                <!-- Zero-Touch Fulfillment -->
+                <button id="fulfillBtn" class="py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md shadow-purple-600/20 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>🚀 Run Fulfillment</span>
+                </button>
+              </div>
+
+              <!-- Security Isolation Test Button (AT-6) -->
+              <button id="testIsolationBtn" class="w-full py-2 px-3 rounded-xl bg-rose-950/40 hover:bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                <span>🛡️ Test Security Isolation (AT-6: @architect Billing Attempt)</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Console / Tabbed Terminal -->
+          <div id="terminal" class="glass-card p-6 rounded-2xl flex flex-col gap-4">
+            
+            <!-- Terminal Header with Tabs -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-2 text-xs font-mono">
+                <button id="tabAgentLogs" class="px-3 py-1 rounded-lg bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 font-bold">Agent Logs</button>
+                <button id="tabAuditLogs" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white transition">Audit Logs</button>
+                <button id="tabTestResults" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white transition">Test Results</button>
+                <button id="tabGitDiff" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white transition">Git Diff</button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Live Logs</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Terminal Monospace Log Box -->
+            <div id="terminalLogBox" class="p-3.5 rounded-xl bg-[#070A10] border border-slate-900 font-mono text-[11px] leading-relaxed text-slate-300 max-h-48 overflow-y-auto space-y-1">
+              <div><span class="text-slate-500">[17:24:12]</span> <span class="text-indigo-400 font-bold">@architect</span> <span class="text-slate-400">| pytest passed (32/32 tests)</span></div>
+              <div><span class="text-slate-500">[17:24:15]</span> <span class="text-indigo-400 font-bold">@deal-desk</span> <span class="text-slate-400">| Margin calculated: 76.4%</span> <span class="text-emerald-400">✓ PASS</span></div>
+              <div><span class="text-slate-500">[17:24:17]</span> <span class="text-purple-400 font-bold">System</span>     <span class="text-slate-400">| Deal state: PRICE_CHECKED ➔ FOUNDER_APPROVED</span></div>
+              <div><span class="text-slate-500">[17:24:19]</span> <span class="text-cyan-400 font-bold">Switch</span>     <span class="text-slate-400">| Room #acme-fintech-closing updated</span></div>
+            </div>
+
+            <!-- Terminal Footer -->
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
+              <span class="flex items-center gap-1.5">
+                <span class="text-indigo-400">&gt;_</span>
+                <span>Audit trail synchronized</span>
+              </span>
+              <a href="/api/v1/admin/audit-logs" target="_blank" class="text-indigo-400 hover:underline">View JSON ➔</a>
+            </div>
+
+          </div>
+
         </div>
+
       </div>
 
-      <!-- Live DealSpec JSON Viewer -->
-      <div class="glass-card p-5 rounded-xl flex flex-col gap-2">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-white">DealSpec Immutable Record</h2>
-          <span id="specVersionLabel" class="text-xs font-mono text-indigo-400">version 1</span>
-        </div>
-        <pre id="dealSpecJson" class="p-3 rounded-lg bg-black/60 border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto max-h-48">
-{ "loading": true }
-        </pre>
-      </div>
+    </main>
+  </div>
 
-    </div>
+  <!-- Hidden DealSpec JSON for Telemetry Verification -->
+  <pre id="dealSpecJson" class="hidden"></pre>
 
-  </main>
-
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT TELEMETRY & LIVE STATE ENGINE                                  -->
+  <!-- ========================================================================= -->
   <script>
-    let timerSeconds = 105;
+    // Initialize Chart.js Performance Curve
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.45)');
+    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+    const performanceChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+          label: 'Deal Velocity (%)',
+          data: [25, 60, 92, 65, 78, 62, 85],
+          borderColor: '#38BDF8',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true,
+          backgroundColor: gradient,
+          pointBackgroundColor: '#FFFFFF',
+          pointBorderColor: '#38BDF8',
+          pointBorderWidth: 2,
+          pointRadius: [0, 0, 6, 0, 0, 0, 0],
+          pointHoverRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0F172A',
+            borderColor: '#38BDF8',
+            borderWidth: 1,
+            titleFont: { family: 'Plus Jakarta Sans', size: 11 },
+            bodyFont: { family: 'JetBrains Mono', size: 12, weight: 'bold' },
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              label: (context) => `${context.parsed.y}% Wed, Nov 5`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(30, 41, 59, 0.3)' },
+            ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 10 } }
+          },
+          y: {
+            min: 0,
+            max: 100,
+            ticks: {
+              stepSize: 25,
+              callback: (value) => value + '%',
+              color: '#64748B',
+              font: { family: 'JetBrains Mono', size: 10 }
+            },
+            grid: { color: 'rgba(30, 41, 59, 0.3)' }
+          }
+        }
+      }
+    });
+
+    // Session Timer Simulation
+    let secondsElapsed = 138;
     setInterval(() => {
-      timerSeconds++;
-      const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-      const secs = String(timerSeconds % 60).padStart(2, '0');
-      document.getElementById('sessionTimer').innerText = `${mins}:${secs}`;
+      secondsElapsed++;
+      const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+      const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+      const timerEl = document.getElementById('sessionTimer');
+      if (timerEl) timerEl.innerText = `${mins}:${secs}`;
     }, 1000);
 
+    // Live Telemetry Poller
     async function fetchTelemetry() {
       try {
         const res = await fetch('/api/v1/deals/acme-2026-11');
         if (!res.ok) return;
         const deal = await res.json();
-        
-        // Update basic headers
-        document.getElementById('dealVersionBadge').innerText = `v${deal.version}`;
-        document.getElementById('specVersionLabel').innerText = `version ${deal.version}`;
-        document.getElementById('stateBadge').innerText = deal.state;
-        
-        // State badge coloring
-        const stateBadge = document.getElementById('stateBadge');
-        if (deal.state === 'INVOICED') {
-          stateBadge.className = 'px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold';
-        } else if (deal.state === 'PROVISIONED') {
-          stateBadge.className = 'px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/40 font-bold';
-        } else if (deal.state === 'CUSTOMER_ACCEPTED') {
-          stateBadge.className = 'px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold';
-        } else if (deal.state === 'FOUNDER_APPROVED') {
-          stateBadge.className = 'px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold';
-        } else if (deal.state === 'PRICE_CHECKED') {
-          stateBadge.className = 'px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold';
-        }
 
-        document.getElementById('priceDisplay').innerText = `$${deal.commercial.price_usd_year.toLocaleString()} / yr`;
-        document.getElementById('infraCostDisplay').innerText = `$${deal.engineering.infra_cost_usd_year.toLocaleString()} / yr`;
-        document.getElementById('rpmDisplay').innerText = `${deal.engineering.rate_limit_rpm.toLocaleString()} req/min`;
+        // Update ID and Version
+        document.getElementById('dealIdText').innerText = deal.deal_id;
+        document.getElementById('dealVersionBadge').innerText = `v${deal.version}`;
         document.getElementById('dealSpecJson').innerText = JSON.stringify(deal, null, 2);
 
-        // Update Margin Gauge & Rules
-        if (deal.playbook) {
-          const margin = deal.playbook.margin;
-          const marginPct = (margin * 100).toFixed(1) + '%';
-          const marginDisplay = document.getElementById('marginPercentageDisplay');
-          const marginBar = document.getElementById('marginBarFill');
-          const verdictBadge = document.getElementById('playbookVerdictBadge');
+        // Update Price, RPM, Terms
+        const price = deal.commercial ? deal.commercial.price_usd_year : 20000;
+        const rpm = deal.engineering ? deal.engineering.rate_limit_rpm : 1000;
+        const terms = deal.commercial ? deal.commercial.payment_terms : 'Net-30';
 
-          marginDisplay.innerText = marginPct;
-          marginBar.style.width = Math.min(Math.max(margin * 100, 5), 100) + '%';
+        document.getElementById('priceDisplay').innerText = `$${price.toLocaleString()} / year`;
+        document.getElementById('rpmDisplay').innerText = `${rpm.toLocaleString()} RPM`;
+        document.getElementById('termsDisplay').innerText = terms;
 
-          if (margin >= 0.75) {
-            marginDisplay.className = 'text-2xl font-black font-mono text-emerald-400';
-            marginBar.className = 'h-full rounded-full transition-all duration-500 bg-emerald-500';
-            verdictBadge.innerText = 'PASS (All R1-R5)';
-            verdictBadge.className = 'text-sm font-bold text-emerald-400 font-mono';
-            document.getElementById('actionRequiredSubtext').innerText = 'Ready for Approval';
-            document.getElementById('actionRequiredSubtext').className = 'text-[10px] text-emerald-400 font-mono';
-            document.getElementById('priceDiscountSubtext').innerText = 'List: $24,000 (-8.3% discount)';
-
-            document.getElementById('ruleR1Card').className = 'p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between';
-            document.getElementById('ruleR1Title').className = 'text-xs font-bold text-emerald-400 font-mono';
-            document.getElementById('ruleR1Subtext').innerText = 'Calculated: 76.4% (Exceeds 75% minimum)';
-            document.getElementById('ruleR1Badge').innerText = 'PASS';
-            document.getElementById('ruleR1Badge').className = 'px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-
-            document.getElementById('ruleR2Card').className = 'p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between';
-            document.getElementById('ruleR2Title').className = 'text-xs font-bold text-emerald-400 font-mono';
-            document.getElementById('ruleR2Subtext').innerText = 'Discount: 8.3% ($22,000 ≥ $21,600 floor)';
-            document.getElementById('ruleR2Badge').innerText = 'PASS';
-            document.getElementById('ruleR2Badge').className = 'px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-          }
+        // Margin Display
+        const marginEl = document.getElementById('marginPercentageDisplay');
+        if (deal.playbook && deal.playbook.margin !== undefined) {
+          const marginPct = (deal.playbook.margin * 100).toFixed(1);
+          marginEl.innerText = `${marginPct}% ${deal.playbook.passed ? '(Pass)' : '(Fail)'}`;
+          marginEl.className = deal.playbook.passed ? 'text-emerald-400 font-bold mt-0.5' : 'text-rose-400 font-bold mt-0.5';
         }
 
-        // Approval indicator update
-        if (deal.approvals && deal.approvals.customer) {
-          document.getElementById('approvalIndicator').innerText = 'Fully Approved & Closed ✓';
-          document.getElementById('approvalIndicator').className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold';
-        } else if (deal.approvals && deal.approvals.founder) {
-          document.getElementById('approvalIndicator').innerText = 'Founder Signed ✓';
-          document.getElementById('approvalIndicator').className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-bold';
-        }
+        // Stepper State Logic
+        updateWorkflowStepper(deal.state);
+
       } catch (err) {
-        console.error('Telemetry fetch error:', err);
+        console.error('Telemetry error:', err);
       }
 
-      // Fetch Audit Logs
+      // Fetch Audit Logs for Terminal
       try {
-        const auditRes = await fetch('/api/v1/admin/audit-logs');
+        const auditRes = await fetch('/api/v1/admin/audit-logs?deal_id=acme-2026-11&limit=8');
         if (auditRes.ok) {
           const logs = await auditRes.json();
-          const container = document.getElementById('auditLogContainer');
+          const terminal = document.getElementById('terminalLogBox');
           if (logs.length > 0) {
-            container.innerHTML = logs.map(l => `
-              <div class="p-2.5 rounded bg-slate-900/60 border ${l.status === 'DENIED' || l.status === 'FAIL' ? 'border-red-500/40 bg-red-950/20' : 'border-slate-800'} flex flex-col gap-1">
-                <div class="flex items-center justify-between">
-                  <span class="${l.actor === '@architect' && l.status === 'DENIED' ? 'text-red-400 font-black' : 'text-indigo-400 font-bold'}">${l.actor}</span>
-                  <span class="px-1.5 py-0.5 text-[9px] rounded ${l.status === 'DENIED' || l.status === 'FAIL' ? 'bg-red-500/20 text-red-300 font-bold' : 'bg-emerald-500/20 text-emerald-300'} font-bold">${l.status}</span>
-                </div>
-                <div class="text-slate-300 text-[11px]">${l.action}: ${l.details || ''}</div>
-                <div class="text-[10px] text-slate-500">${l.timestamp}</div>
-              </div>
-            `).join('');
+            terminal.innerHTML = logs.map(l => {
+              const time = new Date(l.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+              const actorColor = l.actor === '@architect' ? 'text-cyan-400' : (l.actor === '@deal-desk' ? 'text-indigo-400' : 'text-purple-400');
+              const statusColor = l.status === 'DENIED' ? 'text-rose-400 font-bold' : (l.status === 'FAIL' ? 'text-amber-400' : 'text-emerald-400');
+              return `<div><span class="text-slate-500">[${time}]</span> <span class="${actorColor} font-bold">${l.actor}</span> <span class="text-slate-400">| ${l.action}</span> <span class="${statusColor}">${l.status}</span></div>`;
+            }).join('');
           }
         }
-      } catch (err) {
-        console.error('Audit log fetch error:', err);
+      } catch (e) {}
+    }
+
+    // Dynamic Stepper Renderer
+    function updateWorkflowStepper(state) {
+      const steps = ['stepEngineered', 'stepPriceChecked', 'stepFounderApproval', 'stepCustomerAcceptance', 'stepProvisioning', 'stepInvoiced'];
+      const progressText = document.getElementById('dealProgressText');
+      const progressBar = document.getElementById('dealProgressBar');
+
+      const completedClass = 'w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-xs font-bold shadow-md';
+      const activeClass = 'w-7 h-7 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/60 flex items-center justify-center text-xs font-bold ring-4 ring-blue-500/20 animate-pulse';
+      const pendingClass = 'w-7 h-7 rounded-full bg-slate-800 text-slate-500 border border-slate-700 flex items-center justify-center text-xs';
+
+      if (state === 'DRAFT' || state === 'ENGINEERED') {
+        document.getElementById('stepEngineered').className = activeClass;
+        document.getElementById('stepPriceChecked').className = pendingClass;
+        progressText.innerText = '20% Complete';
+        progressBar.style.width = '20%';
+      } else if (state === 'PRICE_CHECKED') {
+        document.getElementById('stepEngineered').className = completedClass;
+        document.getElementById('stepPriceChecked').className = completedClass;
+        document.getElementById('stepFounderApproval').className = activeClass;
+        document.getElementById('stepCustomerAcceptance').className = pendingClass;
+        progressText.innerText = '40% Complete';
+        progressBar.style.width = '40%';
+      } else if (state === 'FOUNDER_APPROVED') {
+        document.getElementById('stepEngineered').className = completedClass;
+        document.getElementById('stepPriceChecked').className = completedClass;
+        document.getElementById('stepFounderApproval').className = completedClass;
+        document.getElementById('stepCustomerAcceptance').className = activeClass;
+        progressText.innerText = '60% Complete';
+        progressBar.style.width = '60%';
+      } else if (state === 'CUSTOMER_ACCEPTED') {
+        document.getElementById('stepEngineered').className = completedClass;
+        document.getElementById('stepPriceChecked').className = completedClass;
+        document.getElementById('stepFounderApproval').className = completedClass;
+        document.getElementById('stepCustomerAcceptance').className = completedClass;
+        document.getElementById('stepProvisioning').className = activeClass;
+        progressText.innerText = '80% Complete';
+        progressBar.style.width = '80%';
+      } else if (state === 'PROVISIONED' || state === 'INVOICED') {
+        steps.forEach(s => document.getElementById(s).className = completedClass);
+        progressText.innerText = '100% Complete';
+        progressBar.style.width = '100%';
       }
     }
 
+    // Polling Interval
     setInterval(fetchTelemetry, 2000);
     fetchTelemetry();
 
+    // Wire Interactive Buttons
     document.getElementById('counterOfferBtn').addEventListener('click', async () => {
       await fetch('/api/v1/admin/deals/acme-2026-11/counter', { method: 'POST' });
       fetchTelemetry();
