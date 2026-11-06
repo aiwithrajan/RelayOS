@@ -352,6 +352,148 @@ def founder_approve_deal(deal_id: str):
     return deal
 
 
+def build_customer_timeline(deal: DealSpec) -> List[Dict[str, Any]]:
+    """Build chronological sequence of negotiation and closing events for the customer portal."""
+    logs = get_audit_logs(deal.deal_id, limit=50)
+    logs_chrono = list(reversed(logs))
+
+    timeline: List[Dict[str, Any]] = []
+    step_num = 1
+
+    # Step 1: Initial Ask
+    timeline.append({
+        "step": step_num,
+        "actor": "Sarah Lin (Acme VP Eng)",
+        "role": "Customer",
+        "avatar": "👤",
+        "theme": "customer",
+        "title": "Initial Deal Request",
+        "message": "We need custom SAP Treasury ERP sync, 1,000 req/min quota, white-labeling, and a discounted rate of $20,000/yr.",
+    })
+    step_num += 1
+
+    # Step 2: Playbook evaluation on v1
+    timeline.append({
+        "step": step_num,
+        "actor": "@deal-desk",
+        "role": "Pricing Agent",
+        "avatar": "🤖",
+        "theme": "agent",
+        "title": "Playbook Evaluation (DealSpec v1)",
+        "message": "Cost model computed dedicated 1,000 RPM infra at $8,000/yr. Gross Margin is 60.0%, which breaches Rule R1 (Margin floor >= 75%) and Rule R2 (Discount 16.7% > 10%). Flagging to Founder for counter-offer.",
+    })
+    step_num += 1
+
+    # Check for customer revision requests
+    for l in logs_chrono:
+        if l["actor"] == f"{deal.customer.slug}_champion" and l["action"] == "REQUEST_CHANGES":
+            details: Dict[str, Any] = {}
+            if l.get("details"):
+                try:
+                    details = json.loads(l["details"]) if isinstance(l["details"], str) else l["details"]
+                except Exception:
+                    details = {}
+            note = details.get("notes", "Requested adjustments to quota/pricing")
+            price = details.get("requested_price")
+            rpm = details.get("requested_rpm")
+
+            terms_str = []
+            if price:
+                terms_str.append(f"${price:,.0f}/yr")
+            if rpm:
+                terms_str.append(f"{rpm} RPM")
+            terms_suffix = f" (Target: {', '.join(terms_str)})" if terms_str else ""
+
+            timeline.append({
+                "step": step_num,
+                "actor": "Sarah Lin (Acme VP Eng)",
+                "role": "Customer",
+                "avatar": "👤",
+                "theme": "customer",
+                "title": "Customer Revision Request",
+                "message": f'"{note}"{terms_suffix}',
+            })
+            step_num += 1
+
+            if price and price < 20000:
+                cost = 1000 + (7 * (rpm or 600))
+                calc_margin = ((price - cost) / price) * 100
+                timeline.append({
+                    "step": step_num,
+                    "actor": "@deal-desk",
+                    "role": "Pricing Agent",
+                    "avatar": "🤖",
+                    "theme": "agent",
+                    "title": "Playbook Check on Revision",
+                    "message": f"Evaluating ${price:,.0f} offer: Dedicated hosting cost is ${cost:,.0f}/yr. Gross margin is {calc_margin:.1f}%, which fails company 75% margin floor. Countering with approved executive terms.",
+                })
+                step_num += 1
+
+    # Step 3: Founder Counter-Offer (v2)
+    if deal.version >= 2:
+        timeline.append({
+            "step": step_num,
+            "actor": "Founder (RelayOS)",
+            "role": "Vendor Exec",
+            "avatar": "👔",
+            "theme": "founder",
+            "title": "Executive Counter-Offer (DealSpec v2)",
+            "message": "Sarah, we countered with an approved enterprise package: $22,000/yr at 600 RPM (6x capacity), Net-15 terms, and we completely waive the $2,500 setup fee.",
+        })
+        step_num += 1
+
+        timeline.append({
+            "step": step_num,
+            "actor": "@deal-desk",
+            "role": "Pricing Agent",
+            "avatar": "🤖",
+            "theme": "agent",
+            "title": "Playbook Compliance Verified",
+            "message": "DealSpec v2 verified: Dedicated infra cost is $5,200/yr. Gross Margin is 76.4% (Rules R1 through R5 all PASS). Terms locked and ready for dual sign-off.",
+        })
+        step_num += 1
+
+    # Step 4: Founder Approved
+    if deal.approvals.founder:
+        timeline.append({
+            "step": step_num,
+            "actor": "Founder (RelayOS)",
+            "role": "Vendor Exec",
+            "avatar": "👔",
+            "theme": "founder",
+            "title": "Founder Commercial Sign-Off ✓",
+            "message": f"Commercial terms approved and digitally signed by Founder ({deal.approvals.founder.timestamp[:19]}). Customer signature is unlocked.",
+        })
+        step_num += 1
+
+    # Step 5: Customer Accepted
+    if deal.approvals.customer:
+        timeline.append({
+            "step": step_num,
+            "actor": "Sarah Lin (Acme VP Eng)",
+            "role": "Customer",
+            "avatar": "✍️",
+            "theme": "customer",
+            "title": "Customer Agreement Accepted ✓",
+            "message": f"Proposal officially signed on behalf of Acme FinTech ({deal.approvals.customer.timestamp[:19]}). Dedicated environment provisioning authorized.",
+        })
+        step_num += 1
+
+    # Step 6: Fulfillment (Provisioned / Invoiced)
+    if deal.state in [DealState.PROVISIONED, DealState.INVOICED]:
+        timeline.append({
+            "step": step_num,
+            "actor": "@deal-desk",
+            "role": "Fulfillment Worker",
+            "avatar": "🚀",
+            "theme": "fulfillment",
+            "title": "Zero-Touch Fulfillment Completed",
+            "message": "Dedicated tenant deployed at /t/acme (600 RPM quota). Legal ReportLab Order Form PDF generated. Stripe invoice issued ($22,000.00 Net-15).",
+        })
+
+    return timeline
+
+
 # --- Customer Endpoints ---
 
 @app.get("/api/v1/customer/proposal/{slug}")
@@ -359,6 +501,8 @@ def get_customer_proposal(slug: str):
     deal = get_deal_spec("acme-2026-11")
     if not deal or deal.customer.slug != slug:
         raise HTTPException(status_code=404, detail=f"No active proposal found for '{slug}'")
+
+    timeline = build_customer_timeline(deal)
 
     return {
         "deal_id": deal.deal_id,
@@ -383,6 +527,7 @@ def get_customer_proposal(slug: str):
             "founder_approved": deal.approvals.founder is not None,
             "customer_approved": deal.approvals.customer is not None,
         },
+        "timeline": timeline,
     }
 
 

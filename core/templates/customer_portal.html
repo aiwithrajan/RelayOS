@@ -105,6 +105,23 @@
       </div>
     </div>
 
+    <!-- Live Switch Deal Room Stream (Call & Negotiation Sequence) -->
+    <div class="portal-card p-6 rounded-2xl flex flex-col gap-4 border border-indigo-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/20 shadow-xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">Live Switch Deal Room Stream</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">#acme-fintech-closing</span>
+        </div>
+        <span class="text-[11px] text-slate-400 font-mono">Negotiation Call Sequence (Live)</span>
+      </div>
+
+      <!-- Sequence List Container -->
+      <div id="dealTimelineContainer" class="flex flex-col gap-3 max-h-96 overflow-y-auto pr-1">
+        <div class="text-xs text-slate-400 font-mono p-3">Connecting to Switch deal room...</div>
+      </div>
+    </div>
+
     <!-- Sign-Off Action Card -->
     <div class="portal-card p-6 rounded-2xl border-2 border-indigo-500/40 bg-gradient-to-r from-slate-900 to-indigo-950/30 flex flex-col md:flex-row items-center justify-between gap-6">
       <div>
@@ -280,6 +297,51 @@
         const deliverableEl = document.getElementById('deliverableRpmText');
         if (deliverableEl) {
           deliverableEl.innerText = `Guaranteed ${data.engineering.rate_limit_rpm.toLocaleString()} RPM`;
+        }
+
+        // Render Live Switch Deal Timeline (Call Sequence Steps)
+        if (data.timeline && data.timeline.length > 0) {
+          const timelineContainer = document.getElementById('dealTimelineContainer');
+          const themeConfig = {
+            customer: {
+              card: 'border-blue-500/30 bg-blue-950/20',
+              badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+              title: 'text-blue-300'
+            },
+            agent: {
+              card: 'border-purple-500/30 bg-purple-950/20',
+              badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+              title: 'text-purple-300'
+            },
+            founder: {
+              card: 'border-emerald-500/30 bg-emerald-950/20',
+              badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+              title: 'text-emerald-300'
+            },
+            fulfillment: {
+              card: 'border-indigo-500/40 bg-indigo-950/30',
+              badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+              title: 'text-indigo-300'
+            }
+          };
+
+          timelineContainer.innerHTML = data.timeline.map(item => {
+            const conf = themeConfig[item.theme] || themeConfig.agent;
+            return `
+              <div class="p-3.5 rounded-xl border ${conf.card} flex flex-col gap-1.5 transition-all">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm">${item.avatar}</span>
+                    <span class="font-bold text-white text-xs">${item.actor}</span>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded border ${conf.badge}">${item.role}</span>
+                  </div>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Step ${item.step}</span>
+                </div>
+                <div class="text-xs font-semibold ${conf.title} pl-6">${item.title}</div>
+                <div class="text-xs text-slate-300 pl-6 leading-relaxed">${item.message}</div>
+              </div>
+            `;
+          }).join('');
         }
 
         const badge = document.getElementById('proposalStatusBadge');
