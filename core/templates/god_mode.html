@@ -173,55 +173,6 @@
   <!-- ========================================================================= -->
   <div class="flex-1 min-h-screen flex flex-col overflow-y-auto">
 
-    <!-- Top Navigation Bar -->
-    <header class="h-16 px-6 lg:px-8 bg-sidebarDark/80 backdrop-blur-md border-b border-borderDark flex items-center justify-between sticky top-0 z-40">
-      <!-- Search Input -->
-      <div class="relative w-80">
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-        </span>
-        <input type="text" placeholder="Search deals, agents, or commands..." class="w-full pl-9 pr-12 py-1.5 rounded-lg bg-cardDark/80 border border-borderDark text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition font-sans">
-        <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-          <kbd class="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-slate-800 text-slate-400 border border-slate-700">⌘ K</kbd>
-        </span>
-      </div>
-
-      <!-- Header Right Controls -->
-      <div class="flex items-center gap-4">
-        <!-- System Status Pill -->
-        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
-          <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>System Online</span>
-        </div>
-
-        <!-- Mode Toggle / Theme Icon -->
-        <button class="h-8 w-8 rounded-lg bg-cardDark border border-borderDark flex items-center justify-center text-slate-400 hover:text-white transition" title="Active Theme">
-          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-          </svg>
-        </button>
-
-        <!-- Notification Bell with Badge -->
-        <div class="relative">
-          <button class="h-8 w-8 rounded-lg bg-cardDark border border-borderDark flex items-center justify-center text-slate-400 hover:text-white transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-            </svg>
-          </button>
-          <span class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-rose-500 text-white font-bold text-[9px] flex items-center justify-center shadow">
-            3
-          </span>
-        </div>
-
-        <!-- User Avatar -->
-        <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xs text-white shadow ring-2 ring-indigo-500/30">
-          R
-        </div>
-      </div>
-    </header>
-
     <!-- Main Scrollable Dashboard Content -->
     <main class="flex-1 p-6 lg:p-8 flex flex-col gap-6 max-w-7xl w-full mx-auto">
       

@@ -157,42 +157,6 @@
   <!-- ========================================================================= -->
   <div class="flex-1 min-h-screen flex flex-col overflow-y-auto">
 
-    <!-- Top Navigation Bar -->
-    <header class="h-16 px-6 lg:px-8 bg-sidebarDark/80 backdrop-blur-md border-b border-borderDark flex items-center justify-between sticky top-0 z-40">
-      <!-- Search Input -->
-      <div class="relative w-80">
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-        </span>
-        <input type="text" placeholder="Search deals, proposals, or documents..." class="w-full pl-9 pr-12 py-1.5 rounded-lg bg-cardDark/80 border border-borderDark text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition font-sans">
-        <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-          <kbd class="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-slate-800 text-slate-400 border border-slate-700">⌘ K</kbd>
-        </span>
-      </div>
-
-      <!-- Right Header Actions -->
-      <div class="flex items-center gap-4">
-        <!-- Notification Bell with Badge -->
-        <div class="relative">
-          <button class="h-8 w-8 rounded-lg bg-cardDark border border-borderDark flex items-center justify-center text-slate-400 hover:text-white transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-            </svg>
-          </button>
-          <span class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-rose-500 text-white font-bold text-[9px] flex items-center justify-center shadow">
-            2
-          </span>
-        </div>
-
-        <!-- Customer Avatar -->
-        <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-xs text-white shadow ring-2 ring-indigo-500/30">
-          A
-        </div>
-      </div>
-    </header>
-
     <!-- Main Content Container -->
     <main class="flex-1 p-6 lg:p-8 flex flex-col gap-6 max-w-7xl w-full mx-auto">
 
