@@ -1,0 +1,8 @@
+.git
+.venv
+core/.venv
+__pycache__
+*.pyc
+demo_artifacts/raw_video
+demo_artifacts/master_raw.webm
+demo_artifacts/voiceover

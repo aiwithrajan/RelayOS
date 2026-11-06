@@ -7,8 +7,18 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from core.schemas import DealSpec
 
-DOCS_DIR = Path(__file__).resolve().parent / "static" / "documents"
-DOCS_DIR.mkdir(parents=True, exist_ok=True)
+import os
+
+if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+    DOCS_DIR = Path("/tmp/documents")
+else:
+    DOCS_DIR = Path(__file__).resolve().parent / "static" / "documents"
+
+try:
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    DOCS_DIR = Path("/tmp/documents")
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def generate_order_form_pdf(spec: DealSpec) -> Path:

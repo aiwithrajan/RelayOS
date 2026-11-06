@@ -107,6 +107,13 @@ app.add_middleware(
 
 # --- HTML UI & Tenant Routes ---
 
+@app.get("/")
+def get_root():
+    """Redirect root to God-Mode Mission Control Dashboard."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/god-mode")
+
+
 @app.get("/god-mode", response_class=FileResponse)
 def get_god_mode():
     """Serve the God-Mode Mission Control Dashboard."""
@@ -168,7 +175,11 @@ def get_document(filename: str):
     """Download or view generated legal Order Form PDFs."""
     file_path = DOCS_DIR / filename
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail=f"Document '{filename}' not found")
+        fallback_path = Path(__file__).resolve().parent / "static" / "documents" / filename
+        if fallback_path.exists():
+            file_path = fallback_path
+        else:
+            raise HTTPException(status_code=404, detail=f"Document '{filename}' not found")
     return FileResponse(file_path, media_type="application/pdf", filename=filename)
 
 
