@@ -99,11 +99,12 @@
           <span>Agents</span>
         </a>
 
-        <a href="#playbook" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="#playbook" id="openPlaybookBtn" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition cursor-pointer">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
           </svg>
-          <span>Playbook</span>
+          <span class="text-slate-200 font-semibold">Playbook</span>
+          <span class="ml-auto text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">R1–R5</span>
         </a>
 
         <a href="/t/acme" target="_blank" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 font-medium text-xs transition">
@@ -838,6 +839,174 @@
     document.getElementById('resetDemoBtn').addEventListener('click', async () => {
       await fetch('/api/v1/admin/reset', { method: 'POST' });
       fetchTelemetry();
+    });
+  <!-- ========================================================================= -->
+  <!-- PLAYBOOK DOCUMENTATION MODAL                                              -->
+  <!-- ========================================================================= -->
+  <div id="playbookModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="glass-panel max-w-3xl w-full p-6 sm:p-7 rounded-2xl shadow-2xl border border-slate-700 bg-slate-900/95 flex flex-col gap-5 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between pb-4 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-lg text-white shadow-lg shadow-indigo-600/30">
+            📋
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base sm:text-lg font-bold text-white">Enterprise Pricing & Governance Playbook</h2>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">v2.0</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Enforced deterministically by <span class="text-cyan-400 font-mono">@deal-desk</span> • Zero LLM hallucination risk
+            </p>
+          </div>
+        </div>
+        <button id="closePlaybookBtn" class="text-slate-400 hover:text-white text-xl p-1.5 transition leading-none cursor-pointer">✕</button>
+      </div>
+
+      <!-- Core Principle Banner -->
+      <div class="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs text-slate-300 flex items-start gap-3">
+        <span class="text-base text-indigo-400 shrink-0">🛡️</span>
+        <div class="leading-relaxed">
+          <strong class="text-white">Strict Deterministic Execution:</strong>
+          Every deal is evaluated mathematically against Rules R1 through R5. An enterprise deal advances to <code class="text-cyan-300 font-mono">FOUNDER_APPROVED</code> only if all 5 rules evaluate to <span class="text-emerald-400 font-bold">PASS</span> or a formal founder counter-offer override is recorded.
+        </div>
+      </div>
+
+      <!-- 5 Playbook Rules Grid -->
+      <div class="flex flex-col gap-2.5">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">1. Playbook Rules (R1 – R5)</h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <!-- R1 -->
+          <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white font-mono flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span> R1: Margin Floor
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">≥ 75.0%</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Gross margin must meet or exceed 75%. Formula: <code class="text-slate-300 font-mono">(Price - Cost) / Price</code>.
+            </p>
+          </div>
+
+          <!-- R2 -->
+          <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white font-mono flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span> R2: Discount Authority
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">≤ 10.0% ($21.6k Floor)</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              List price is $24,000/yr. Discounts up to 10% ($21,600 floor) auto-approved; discounts &gt;10% trigger founder review.
+            </p>
+          </div>
+
+          <!-- R3 -->
+          <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white font-mono flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span> R3: Setup Fee Waiver
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">$2,500 Standard</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Setup fee automatically waived if annual price ≥ $20,000 and commitment term ≥ 12 months.
+            </p>
+          </div>
+
+          <!-- R4 -->
+          <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white font-mono flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span> R4: Payment Terms
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Net-15 / Net-30</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Net-30 standard; Net-15 preferred to accelerate working capital. Net-60 requires explicit CFO sign-off.
+            </p>
+          </div>
+
+          <!-- R5 (Full Width) -->
+          <div class="sm:col-span-2 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white font-mono flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span> R5: White-Label Branding Policy
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Enterprise Only</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Dedicated isolated tenant subdomain routing (e.g., <code class="text-indigo-400 font-mono">/t/acme</code>) is an exclusive entitlement of the Enterprise Tier.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cost Model Section -->
+      <div class="flex flex-col gap-2.5">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">2. Deterministic Cost Model Formula</h3>
+        
+        <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 font-mono text-xs flex flex-col gap-2">
+          <div class="text-cyan-300 font-bold text-sm">
+            Annual Infra Cost (USD) = $1,000 + ($7 × Allocated RPM)
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+            <div>• <strong class="text-slate-300">1,000 RPM (Ask):</strong> $1,000 + ($7 × 1,000) = <span class="text-rose-400 font-bold">$8,000/yr</span> (60.0% Margin)</div>
+            <div>• <strong class="text-slate-300">600 RPM (Counter):</strong> $1,000 + ($7 × 600) = <span class="text-emerald-400 font-bold">$5,200/yr</span> (76.4% Margin)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privilege Isolation Notice (AT-6) -->
+      <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-[11px] font-mono text-slate-400 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span>🔒 FastMCP Isolation:</span>
+          <span class="text-emerald-400 font-bold">@deal-desk</span> <span class="text-slate-500">Allowed</span> •
+          <span class="text-rose-400 font-bold">@architect</span> <span class="text-slate-500">Blocked (HTTP 403)</span>
+        </div>
+        <a href="file:///Users/apple/Desktop/Switch/Enterprise_Pricing_Playbook.md" target="_blank" class="text-indigo-400 hover:text-indigo-300 font-semibold transition">
+          View Raw Markdown ➔
+        </a>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end pt-2 border-t border-slate-800">
+        <button id="closePlaybookBtn2" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition cursor-pointer">
+          Close Playbook
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Playbook Modal Listeners
+    const pbModal = document.getElementById('playbookModal');
+    const openPbBtn = document.getElementById('openPlaybookBtn');
+    const closePbBtn = document.getElementById('closePlaybookBtn');
+    const closePbBtn2 = document.getElementById('closePlaybookBtn2');
+
+    if (openPbBtn) {
+      openPbBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        pbModal.classList.remove('hidden');
+      });
+    }
+
+    const closePlaybook = () => pbModal.classList.add('hidden');
+    if (closePbBtn) closePbBtn.addEventListener('click', closePlaybook);
+    if (closePbBtn2) closePbBtn2.addEventListener('click', closePlaybook);
+    pbModal.addEventListener('click', (e) => {
+      if (e.target === pbModal) closePlaybook();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !pbModal.classList.contains('hidden')) {
+        closePlaybook();
+      }
     });
   </script>
 </body>
